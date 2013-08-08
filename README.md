@@ -3,6 +3,7 @@
 Dart [STOMP](http://stomp.github.io/) client.
 
 * [Home](http://rikulo.org)
+* [API Reference](http://api.rikulo.org/stomp/latest)
 * [Discussion](http://stackoverflow.com/questions/tagged/rikulo)
 * [Git Repository](https://github.com/rikulo/stomp)
 * [Issues](https://github.com/rikulo/stomp/issues)
@@ -24,7 +25,7 @@ Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the 
 ###Running on Dart VM
 
     import "package:stomp/stomp.dart";
-    import "package:stomp/vm_plugin.dart" show connect;
+    import "package:stomp/vm.dart" show connect;
 
     void main() {
       connect("foo.server.com").then((StompClient stomp) {
@@ -40,15 +41,17 @@ There are basically a few alternative ways to communicate:
 
 * JSON objects: `sendJson()` and `subscribeJson()`
 * Strings: `sendString()` and `subscribeString()`
-* Bytes (`List<int>`): `sendBytes()` and `subscribeBytes()`
-* BLOB (low-level): `send` and `subscribe`
+* Bytes: `sendBytes()` and `subscribeBytes()`
+* BLOB (huge data): `sendBlob()` and `subscribeBlob()`
+
+Please refer to [StompClient](http://api.rikulo.org/stomp/latest/stomp/StompClient.html) for more information.
 
 ###Running on Browser
 
-The same as the above, except import `ws_plugin.dart` instead:
+The same as the above, except import `websocket.dart` instead of `vm.dart`:
 
     import "package:stomp/stomp.dart";
-    import "package:stomp/ws_plugin.dart" show connect;
+    import "package:stomp/websocket.dart" show connect;
 
     //the rest is the same as running on Dart VM
 

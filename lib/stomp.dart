@@ -7,7 +7,7 @@ import "dart:async";
 import "dart:json" as Json;
 import "package:meta/meta.dart";
 
-import "impl/plugin.dart" show stompConnector;
+import "impl/plugin.dart" show StompConnector;
 
 part "src/stomp_impl.dart";
 
@@ -41,14 +41,12 @@ abstract class StompClient {
   /** Connects a STOMP server, and instantiates a [StompClient]
    * to represent the connection.
    *
-   * > Notice: before invoking this method, [initConnector](../stomp_vm.html#initConnector)
-   * (if running on Dart VM, or [initConnector](../stomp_websocket.html#initConnector) if
-   * running on a browser) must be called.
-   * Alternatively, you can invoke [connect](../stomp_vm.html#connect)
-   * (if running on Dart VM, or [connect](../stomp_websocket.html#connect) if
-   * running on a browser). It invokes `initConnector` automatically.
+   * **Notice:** Instead of invoking this method,
+   * you can invoke [VM's connect](../stomp_vm.html#connect) if running on Dart VM.
+   * Or, invoke [WebSocket's connect](../stomp_websocket.html#connect) if
+   * running on a browser.
    */
-  static Future<StompClient> connect(address, {int port: 61626,
+  static Future<StompClient> connect(StompConnector connector, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
     void onError(String message)}) {
@@ -59,31 +57,10 @@ abstract class StompClient {
    */
   Future disconnect({String receipt});
 
-  /** Sends a message by writing the encoded bytes into [StreamSink].
-   * It is a low-level send command. You can use [sendBytes], [sendString]
-   * and [sendJson] instead for easy handling,
-   * unless you'd like to send a huge amount of data (without storing them
-   * in memory first).
-   *
-   *     stomp.send("/foo").then((StreamSink<List<int>> body) {
-   *       body.add(byes);
-   *       body.addStream(anotherByteStream);
-   *     });
-   *
-   *  **Notes of implementing the `then` callback**
-   *
-   * * Since STOMP is text-based messaging protocol, the bytes being written can't
-   * contain the NULL octet (i.e., value 0). For example, you can encode as base64.
-   * * If the callback doesn't complete at the return, it shall return a Future object
-   * to indicate when it completes.
-   * * The callback shall not call `close()`. It will be called automatically.
-   */
-  Future<StreamSink<List<int>>> send(String destination,
-      {Map<String, String> headers});
   /** Sends an array of bytes.
    *
    * * [message] - the message. It shall be an array of bytes (i.e., only the lowest
-   * 8 bits are handled).
+   * 8 bits are meaningful, aka, octets).
    */
   Future sendBytes(String destination, List<int> message,
       {Map<String, String> headers});
@@ -104,37 +81,65 @@ abstract class StompClient {
    */
   Future sendJson(String destination, message,
       {Map<String, String> headers});
-
-  /** Subscribes for listening to a given destination.
-   * Like [send], it is a low-level subscribe command. You can use [subscribeBytes],
-   * [subscribeString] and [subscribeJson] instead for easy handling,
-   * unless you'd like to receive a huge amount of data (without storing them in
-   * memory first).
+  /** Sends a message read from a given [Stream].
+   * It saves the memory use since the message is *piping* from [Stream]
+   * to the network directly.
    *
-   *     stomp.subscribe("/foo/blob", onData: (Stream<List<int>> stream) {
-   *       stream.listen((List<int> data) {
-   *         //handle data
+   * **Notes**
+   *
+   * * Though it is typed List<int>, it is actually an array of bytes (i.e.,
+   * only the lowest 8 bits are meaningful, aka, octets).
+   * * Since STOMP is text-based messaging protocol, the message being written can't
+   * contain the NULL octet (i.e., value 0). For example, you can encode as base64.
+   * * Unlike other send methods, [sendBlob] won't set the content-length header.
+   * If you know the length in advance, you can pass it into [headers].
+   */
+  Future sendBlob(String destination, Stream<List<int>> message,
+      {Map<String, String> headers});
+
+  /** Subscribes for listening a given destination; assuming the message
+   * are an array of bytes (aka., octets).
+   *
+   *     stomp.subscribe("/foo", (List<int> message) {
+   *       //handle message (an array of octets)
+   *     });
+   */
+  Future subscribeBytes(String destination,
+      void onMessage(Map<String, String> headers, List<int> message),
+      {Ack ack: AUTO});
+  /** Subscribes for listening a given destination; assuming the message
+   * are a String.
+   *
+   *     stomp.subscribe("/foo", (String message) {
+   *       //handle message
+   *     });
+   */
+  Future subscribeString(String destination,
+      void onMessage(Map<String, String> headers, String message),
+      {Ack ack: AUTO});
+  /** Subscribes for listening a given destination; assuming the message
+   * are a JSON object.
+   *
+   *     stomp.subscribe("/foo", (message) {
+   *       //handle message (it is a JSON object decoded from a JSON string)
+   *     });
+   */
+  Future subscribeJson(String destination,
+      void onMessage(Map<String, String> headers, message),
+      {Ack ack: AUTO});
+  /** Subscribes for listening to a given destination.
+   * Like [sendBlob], it is useful if you'd like to receive a huge amount of
+   * message (without storing them in memory first).
+   *
+   *     stomp.subscribe("/foo/blob", (Stream<List<int>> stream) {
+   *       stream.listen((List<int> message) {
+   *         //handle message
    *       }, onDone: () {
    *         //handle done
    *       });
    *     })
    */
-  Future subscribe(String destination,
-      void onData(Map<String, String> headers, Stream<List<int>> data),
-      {Ack ack: AUTO});
-  /** Subscribes for listening to the bytes sent to a given destination.
-   */
-  Future subscribeBytes(String destination,
-      void onData(Map<String, String> headers, List<int> data),
-      {Ack ack: AUTO});
-  /** Subscribes for listening to String-typed messages sent to a given destination.
-   */
-  Future subscribeString(String destination,
-      void onData(Map<String, String> headers, String data),
-      {Ack ack: AUTO});
-  /** Subscribes for listening to JSON objects sent to a given destination.
-   */
-  Future subscribeJson(String destination,
-      void onData(Map<String, String> headers, data),
+  Future subscribeBlob(String destination,
+      void onMessage(Map<String, String> headers, Stream<List<int>> message),
       {Ack ack: AUTO});
 }
