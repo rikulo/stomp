@@ -24,14 +24,10 @@ Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the 
 ###Running on Dart VM
 
     import "package:stomp/stomp.dart";
-    import "package:stomp/vm_plugin.dart";
+    import "package:stomp/vm_plugin.dart" show connect;
 
     void main() {
-      //you have to initialize StompClient once
-      initStompClient();
-
-      //then, you can create any number of StompClient you want.
-      StompClient.connect("foo.server.com").then((StompClient stomp) {
+      connect("foo.server.com").then((StompClient stomp) {
         stomp.subscribeString("/foo", (String message) {
           print("Recieve $message");
         });
@@ -52,7 +48,7 @@ There are basically a few alternative ways to communicate:
 The same as the above, except import `ws_plugin.dart` instead:
 
     import "package:stomp/stomp.dart";
-    import "package:stomp/ws_plugin.dart";
+    import "package:stomp/ws_plugin.dart" show connect;
 
     //the rest is the same as running on Dart VM
 

@@ -7,7 +7,7 @@ import "dart:async";
 import "dart:json" as Json;
 import "package:meta/meta.dart";
 
-import "plugin.dart" show stompConnector;
+import "impl/plugin.dart" show stompConnector;
 
 part "src/stomp_impl.dart";
 
@@ -38,7 +38,15 @@ abstract class StompClient {
    */
   List<int> get heartbeat;
 
-  /** Connects the STOMP server.
+  /** Connects a STOMP server, and instantiates a [StompClient]
+   * to represent the connection.
+   *
+   * > Notice: before invoking this method, [initConnector](../stomp_vm.html#initConnector)
+   * (if running on Dart VM, or [initConnector](../stomp_websocket.html#initConnector) if
+   * running on a browser) must be called.
+   * Alternatively, you can invoke [connect](../stomp_vm.html#connect)
+   * (if running on Dart VM, or [connect](../stomp_websocket.html#connect) if
+   * running on a browser). It invokes `initConnector` automatically.
    */
   static Future<StompClient> connect(address, {int port: 61626,
     String host, String login, String passcode, List<int> heartbeat,

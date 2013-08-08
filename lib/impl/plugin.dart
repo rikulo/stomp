@@ -1,9 +1,9 @@
 //Copyright (C) 2013 Potix Corporation. All Rights Reserved.
 //History: Wed, Aug 07, 2013  6:52:46 PM
 // Author: tomyeh
-library stomp_plugin;
+library stomp_impl_plugin;
 
-import "stomp.dart" show StompClient;
+import "../stomp.dart" show StompClient;
 
 /** A STOMP connector for binding with different networking, such as
  * WebSocket and Socket.
