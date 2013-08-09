@@ -63,7 +63,7 @@ class _WSStompConnector extends StompConnector {
   }
 
   @override
-  void write(List<int> bytes, String text) {
+  void write(String text, [List<int> bytes]) {
     if (text != null) {
       _write(text);
     } else if (bytes != null && !bytes.isEmpty) {
@@ -72,7 +72,7 @@ class _WSStompConnector extends StompConnector {
   }
   void _write(String data) {
     final int len = data.length;
-    if (_buf.length + len >= _MAX_FRAME_SIZE) { //_buf is full
+    if (_buf.length + len >= _MAX_FRAME_SIZE) { //_buf will be full
       _flush();
 
       for (int i = 0;;) {
@@ -90,15 +90,17 @@ class _WSStompConnector extends StompConnector {
   }
   void _flush() {
     if (!_buf.isEmpty) {
-      _socket.send(_buf.toString());
+      final String text = _buf.toString();
       _buf.clear();
+      _socket.send(text);
     }
   }
+
   @override
   Future writeStream(Stream<List<int>> stream) {
     final Completer completer = new Completer();
     stream.listen((List<int> data) {
-      write(data, null);
+      write(null, data);
     }, onDone: () {
       completer.complete();
     }, onError: (error) {

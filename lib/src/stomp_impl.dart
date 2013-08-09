@@ -24,6 +24,22 @@ class _StompClient implements StompClient {
    */
   final List<int> heartbeat;
 
+  static Future<StompClient> connect(StompConnector connector,
+    String host, String login, String passcode, List<int> heartbeat,
+    void onDisconnect(),
+    void onError(String message)) {
+    final Map<String, String> headers = new LinkedHashMap();
+    headers["accept-version"] = "1.2";
+    if (host != null)
+      headers["host"] = host;
+    if (login != null)
+      headers["login"] = login;
+    if (passcode != null)
+      headers["passcode"] = passcode;
+    if (heartbeat != null)
+      headers["heartbeat"] = heartbeat.join(",");
+    writeFrame(connector, "STOMP", headers);
+  }
   _StompClient(this._connector, this.server, this.session, this.heartbeat,
       this._onDisconnect, this._onError);
 

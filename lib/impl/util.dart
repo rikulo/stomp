@@ -6,18 +6,27 @@ library stomp_impl_util;
 import "plugin.dart" show StompConnector;
 
 ///Writes the headers (excluding body and End-of-Frame)
-void writeHeaders(StompConnector connector, String command, Map<String, String> headers) {
+void writeHeaders(StompConnector connector, String command,
+    Map<String, String> headers) {
   connector
-    ..writeString(command)
+    ..write(command)
     ..writeLF();
 
   if (headers != null)
     for (final String name in headers.keys) {
       connector
-        ..writeString(_escape(name))
-        ..writeString(':')
-        ..writeString(_escape(headers[name]));
+        ..write(_escape(name))
+        ..write(':')
+        ..write(_escape(headers[name]));
     }
+}
+
+///Write a simple frame.
+void writeFrame(StompConnector connector, String command,
+    Map<String, String> headers, [String text, List<int> bytes]) {
+  writeHeaders(connector, command, headers);
+  connector.write(text, bytes);
+  connector.writeEof();
 }
 
 String _escape(String value) {

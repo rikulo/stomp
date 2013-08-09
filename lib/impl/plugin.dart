@@ -27,7 +27,7 @@ abstract class StompConnector {
    *
    * Otherwise, this method shall pick the non-null one.
    */
-  void write(List<int> bytes, String text);
+  void write(String text, [List<int> bytes]);
   ///Write a stream
   Future writeStream(Stream<List<int>> stream);
   ///Write the NULL octet to indicate the end of a frame.
@@ -59,13 +59,19 @@ abstract class StompConnector {
   CloseCallback onClose;
 }
 
+const int _BUFFER_SIZE = 16 * 1024;
+const int _MIN_FRAME_SIZE = _BUFFER_SIZE / 4;
+
 /** A skeletal implementation for binary connector.
- * The deriving class shall implement [listen_], [write_] and [addStream].
+ * The deriving class shall implement [listenBytes_] and [writeBytes_].
  */
 abstract class BytesStompConnector extends StompConnector {
+  final List<int> _buf = new List(_BUFFER_SIZE);
+  int _buflen = 0;
+
   BytesStompConnector() {
     ///Note: when this method is called, onBytes/onError/onClose are not set yet
-    listen_((List<int> data) {
+    listenBytes_((List<int> data) {
       if (data != null && !data.isEmpty)
         onBytes(data);
     }, (error) {
@@ -79,27 +85,51 @@ abstract class BytesStompConnector extends StompConnector {
    * The deriving class shall provide an implementation.
    * It is called internally when the constructor is called.
    */
-  void listen_(void onData(List<int> bytes), void onError(error), void onDone());
+  void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone());
   /** Writes bytes (aka., octets) for sending to the peer.
    * The deriving class shall provide an implementation.
    * It is called only internally.
    */
-  void write_(List<int> bytes);
+  void writeBytes_(List<int> bytes);
+
+  void _write(List<int> bytes) {
+    final int len = bytes.length;
+    if (len >= _MIN_FRAME_SIZE || _buflen + len >= _BUFFER_SIZE) { //_buf will be full
+      _flush();
+
+      if (len >= _MIN_FRAME_SIZE) {
+        writeBytes_(bytes);
+        return;
+      }
+    }
+
+    for (int i = 0; i < len; ++i)
+      _buf[_buflen++] = bytes[i];
+  }
+  void _flush() {
+    if (_buflen > 0) {
+      final int len = _buflen;
+      _buflen = 0;
+      writeBytes_(_buf.sublist(0, len));
+    }
+  }
 
   @override
-  void write(List<int> bytes, String text) {
-    if (bytes != null)
-      write_(bytes);
-    else if (text != null && !text.isEmpty)
-      write_(encodeUtf8(text));
+  void write(String text, [List<int> bytes]) {
+    if (bytes != null) {
+       _write(bytes);
+    } else if (text != null && !text.isEmpty) {
+      _write(encodeUtf8(text));
+    }
   }
   @override
   void writeEof() {
-    write_(_EOF);
+    _write(_EOF);
+    _flush();
   }
   @override
   void writeLF() {
-    write_(_LF);
+    _write(_LF);
   }
 }
 

@@ -6,3 +6,4 @@ homepage: https://github.com/rikulo/stomp
 documentation: http://api.rikulo.org/stomp/latest
 dependencies:
   meta: any
+  unittest: any

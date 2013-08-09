@@ -5,9 +5,11 @@ library stomp;
 
 import "dart:async";
 import "dart:json" as Json;
+import "dart:collection" show LinkedHashMap;
 import "package:meta/meta.dart";
 
 import "impl/plugin.dart" show StompConnector;
+import "impl/util.dart";
 
 part "src/stomp_impl.dart";
 
@@ -51,7 +53,11 @@ abstract class StompClient {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
     void onError(String message)}) {
+    if (connector == null)
+      throw new ArgumentError("Required: connector. Use stomp_vm's connect() instead.");
 
+    return _StompClient.connect(connector, host, login, passcode, heartbeat,
+      onDisconnect, onError);
   }
 
   /** Disconnects. After disconnected, this object can not be used any more.

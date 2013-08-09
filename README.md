@@ -1,6 +1,6 @@
 #STOMP Dart Client
 
-[STOMP](http://stomp.github.io/) Dart client for communicating with STOMP-enabled messaging brokers and servers.
+[STOMP](http://stomp.github.io/) Dart client for communicating with STOMP complaint messaging brokers and servers.
 
 * [Home](http://rikulo.org)
 * [API Reference](http://api.rikulo.org/stomp/latest)

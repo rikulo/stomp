@@ -46,11 +46,11 @@ class _SocketStompConnector extends BytesStompConnector {
   _SocketStompConnector(this._socket);
 
   @override
-  void listen_(void onData(List<int> bytes), void onError(error), void onDone()) {
+  void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone()) {
     _socket.listen(onData, onError: onError, onDone: onDone);
   }
   @override
-  void write_(List<int> bytes) {
+  void writeBytes_(List<int> bytes) {
     _socket.add(bytes);
   }
   @override
