@@ -9,7 +9,7 @@ import "dart:utf" show decodeUtf8;
 import "package:meta/meta.dart";
 
 import "stomp.dart" show StompClient;
-import "impl/plugin.dart";
+import "impl/plugin.dart" show StompConnector;
 
 /** Connects a STOMP server, and instantiates a [StompClient]
  * to represent the connection.
@@ -33,15 +33,16 @@ Future<StompClient> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
     void onError(String message)})
-=> StompClient.connect(new _StompConnector(url),
+=> StompClient.connect(new _WSStompConnector(url),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
     onDisconnect: onDisconnect, onError: onError);
 
 ///The implementation
-class _StompConnector extends StompConnector {
+class _WSStompConnector extends StompConnector {
   final WebSocket _socket;
+  final StringBuffer _buf = new StringBuffer();
 
-  _StompConnector(String url): _socket = new WebSocket(url) {
+  _WSStompConnector(String url): _socket = new WebSocket(url) {
     _init();
   }
   void _init() {
@@ -62,39 +63,42 @@ class _StompConnector extends StompConnector {
   }
 
   @override
-  void set encoding(String encoding) {
-    if (encoding != "UTF-8")
-      throw new UnsupportedError(encoding);
+  void write(List<int> bytes, String text) {
+    if (text != null) {
+      _write(text);
+    } else if (bytes != null && !bytes.isEmpty) {
+      _write(decodeUtf8(bytes));
+    }
   }
+  void _write(String data) {
+    final int len = data.length;
+    if (_buf.length + len >= _MAX_FRAME_SIZE) { //_buf is full
+      _flush();
 
-  @override
-  void writeBytes(List<int> data) {
-    if (data != null && !data.isEmpty)
-      writeString(decodeUtf8(data));
-  }
-  @override
-  void writeString(String data) {
-    if (data != null && !data.isEmpty) {
-      final int len = data.length;
-      if (len <= _MAX_FRAME_SIZE) {
-        _socket.send(data);
-      } else {
-        for (int i = 0;;) {
-          final int j = i + _MAX_FRAME_SIZE;
-          final bool end = j >= len;
-          _socket.send(data.substring(i, end ? len: j));
-          if (end)
-            break; //done
-          i = j;
+      for (int i = 0;;) {
+        final int j = i + _MAX_FRAME_SIZE;
+        if (j > len) {
+          data = data.substring(i);
+          break;
         }
+        _socket.send(data.substring(i, j));
+        i = j;
       }
+
+    }
+    _buf.write(data);
+  }
+  void _flush() {
+    if (!_buf.isEmpty) {
+      _socket.send(_buf.toString());
+      _buf.clear();
     }
   }
   @override
   Future writeStream(Stream<List<int>> stream) {
     final Completer completer = new Completer();
     stream.listen((List<int> data) {
-      writeBytes(data);
+      write(data, null);
     }, onDone: () {
       completer.complete();
     }, onError: (error) {
@@ -103,14 +107,15 @@ class _StompConnector extends StompConnector {
     return completer.future;
   }
   @override
-  void writeNull() {
-    writeString(_NULL);
+  void writeEof() {
+    _write(_EOF);
+    _flush();
   }
   @override
   void writeLF() {
-    writeString("\n");
+    _write("\n");
   }
 }
 
-final String _NULL = new String.fromCharCode(0);
+final String _EOF = new String.fromCharCode(0);
 const int _MAX_FRAME_SIZE = 16 * 1024;

@@ -42,7 +42,8 @@ abstract class StompClient {
    * to represent the connection.
    *
    * **Notice:** Instead of invoking this method,
-   * you can invoke [VM's connect](../stomp_vm.html#connect) if running on Dart VM.
+   * you can invoke [VM's connect](../stomp_vm.html#connect) if running on Dart VM
+   * (non-browser).
    * Or, invoke [WebSocket's connect](../stomp_websocket.html#connect) if
    * running on a browser.
    */
@@ -53,7 +54,7 @@ abstract class StompClient {
 
   }
 
-  /** Disconnects.
+  /** Disconnects. After disconnected, this object can not be used any more.
    */
   Future disconnect({String receipt});
 
