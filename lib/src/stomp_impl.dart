@@ -38,7 +38,7 @@ class _StompClient implements StompClient {
       headers["passcode"] = passcode;
     if (heartbeat != null)
       headers["heartbeat"] = heartbeat.join(",");
-    writeFrame(connector, "STOMP", headers);
+    writeSimpleFrame(connector, "STOMP", headers);
   }
   _StompClient(this._connector, this.server, this.session, this.heartbeat,
       this._onDisconnect, this._onError);

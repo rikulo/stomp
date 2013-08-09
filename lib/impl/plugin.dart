@@ -60,10 +60,11 @@ abstract class StompConnector {
 }
 
 const int _BUFFER_SIZE = 16 * 1024;
-const int _MIN_FRAME_SIZE = _BUFFER_SIZE / 4;
+const int _MIN_FRAME_SIZE = _BUFFER_SIZE ~/ 4;
 
 /** A skeletal implementation for binary connector.
- * The deriving class shall implement [listenBytes_] and [writeBytes_].
+ * The subclass shall implement [listenBytes_], [writeBytes_]
+ * and [writeStream_].
  */
 abstract class BytesStompConnector extends StompConnector {
   final List<int> _buf = new List(_BUFFER_SIZE);
@@ -91,6 +92,16 @@ abstract class BytesStompConnector extends StompConnector {
    * It is called only internally.
    */
   void writeBytes_(List<int> bytes);
+  /** Writes the given stream.
+   * Subclass shall implement this method, and shall not override [writeStream].
+   */
+  Future writeStream_(Stream<List<int>> stream);
+
+  @override
+  Future writeStream(Stream<List<int>> stream) {
+    _flush();
+    return writeStream_(stream);
+  }
 
   void _write(List<int> bytes) {
     final int len = bytes.length;

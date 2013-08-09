@@ -54,6 +54,6 @@ class _SocketStompConnector extends BytesStompConnector {
     _socket.add(bytes);
   }
   @override
-  Future writeStream(Stream<List<int>> stream)
+  Future writeStream_(Stream<List<int>> stream)
   => _socket.addStream(stream);
 }
