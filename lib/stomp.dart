@@ -23,6 +23,10 @@ const Ack AUTO = const Ack._("auto");
 const Ack CLIENT = const Ack._("client");
 const Ack CLIENT_INDIVIDUAL = const Ack._("client-individual");
 
+//headers//
+const String CONTENT_TYPE = "content-type";
+const String CONTENT_LENGTH = "content-length";
+
 /**
  * A STOMP client.
  */
@@ -66,6 +70,8 @@ abstract class StompClient {
 
   /** Sends an array of bytes.
    *
+   * Note: it sets the content-length header automatically if not specified.
+   *
    * * [message] - the message. It shall be an array of bytes (i.e., only the lowest
    * 8 bits are meaningful, aka, octets).
    */
@@ -75,6 +81,9 @@ abstract class StompClient {
    *
    *     stomp.send("/foo", "Hi, there");
    *
+   * Note: it sets the content-length and content-type header automatically
+   * if not specified (default content-type: text/plain).
+   *
    * * [message] - the message.
    */
   Future sendString(String destination, String message,
@@ -82,6 +91,9 @@ abstract class StompClient {
   /** Sends a JSON message.
    *
    *     stomp.send("/foo", {"type": 1, "data": ["abc"]});
+   *
+   * Note: it sets the content-length and content-type header automatically
+   * if not specified (default content-type: application/json).
    *
    * * [message] - the message. It must be a JSON object (including null).
    * In other words, it must be able to *jsonized* into a JSON string.

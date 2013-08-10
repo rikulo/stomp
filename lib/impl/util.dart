@@ -5,7 +5,10 @@ library stomp_impl_util;
 
 import "dart:async";
 import "dart:utf";
+import "dart:collection" show LinkedHashMap;
 import "plugin.dart" show StompConnector;
+
+import "../stomp.dart" show CONTENT_LENGTH, CONTENT_TYPE;
 
 part "../src/impl/util_read.dart";
 part "../src/impl/util_write.dart";

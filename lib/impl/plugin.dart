@@ -17,17 +17,17 @@ typedef void CloseCallback();
  * WebSocket and Socket.
  */
 abstract class StompConnector {
-  /** Write an array of bytes or a String text.
+  /** Write an array of bytes or a [String].
    *
    * *Implementation Notes*
    *
-   * If both [bytes] and [text] are specified, they must be
+   * If both [bytes] and [string] are specified, they must be
    * equivalent and the implementation can pick up any one that
    * is easier to handle.
    *
    * Otherwise, this method shall pick the non-null one.
    */
-  void write(String text, [List<int> bytes]);
+  void write(String string, [List<int> bytes]);
   ///Write a stream
   Future writeStream(Stream<List<int>> stream);
   ///Write the NULL octet to indicate the end of a frame.
@@ -38,15 +38,15 @@ abstract class StompConnector {
   /** Called when data in bytes format is received.
    * The implementation can assume it is never null.
    *
-   * Note: the implementation needs only to support one of
-   * [onBytes] and [onString], depending how data is transmitted.
+   * Note: the implementation shall invoke [onBytes] or [onString],
+   * but not both.
    */
   BytesCallback onBytes;
   /** Called when data in String format is received.
    * The implementation can assume it is never null.
    *
-   * Note: the implementation needs only to support one of
-   * [onBytes] and [onString], depending how data is transmitted.
+   * Note: the implementation shall invoke [onBytes] or [onString],
+   * but not both.
    */
   StringCallback onString;
   /** Called when there is an error.
@@ -126,11 +126,11 @@ abstract class BytesStompConnector extends StompConnector {
   }
 
   @override
-  void write(String text, [List<int> bytes]) {
+  void write(String string, [List<int> bytes]) {
     if (bytes != null) {
        _write(bytes);
-    } else if (text != null && !text.isEmpty) {
-      _write(encodeUtf8(text));
+    } else if (string != null && !string.isEmpty) {
+      _write(encodeUtf8(string));
     }
   }
   @override

@@ -63,9 +63,9 @@ class _WSStompConnector extends StompConnector {
   }
 
   @override
-  void write(String text, [List<int> bytes]) {
-    if (text != null) {
-      _write(text);
+  void write(String string, [List<int> bytes]) {
+    if (string != null) {
+      _write(string);
     } else if (bytes != null && !bytes.isEmpty) {
       _write(decodeUtf8(bytes));
     }
@@ -90,9 +90,9 @@ class _WSStompConnector extends StompConnector {
   }
   void _flush() {
     if (!_buf.isEmpty) {
-      final String text = _buf.toString();
+      final String str = _buf.toString();
       _buf.clear();
-      _socket.send(text);
+      _socket.send(str);
     }
   }
 
@@ -119,5 +119,5 @@ class _WSStompConnector extends StompConnector {
   }
 }
 
-final String _EOF = new String.fromCharCode(0);
+const String _EOF = '\x00';
 const int _MAX_FRAME_SIZE = 16 * 1024;

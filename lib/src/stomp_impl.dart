@@ -53,16 +53,26 @@ class _StompClient implements StompClient {
       {Map<String, String> headers}) {
 
   }
+
   @override
   Future sendString(String destination, String message,
       {Map<String, String> headers}) {
-
+    headers = addContentType(headers, "text/plain");
   }
   @override
   Future sendJson(String destination, message,
       {Map<String, String> headers}) {
-
+    headers = addContentType(headers, "application/json");
   }
+  static Map<String, String> addContentType(
+      Map<String, String> headers, String contentType) {
+    if (headers == null || headers[CONTENT_TYPE] == null) {
+      headers = headers != null ? new LinkedHashMap.from(headers): new LinkedHashMap();
+      headers[CONTENT_TYPE] = contentType;
+    }
+    return headers;
+  }
+
   @override
   Future sendBlob(String destination, Stream<List<int>> message,
       {Map<String, String> headers}) {

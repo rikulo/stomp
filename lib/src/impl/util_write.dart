@@ -37,20 +37,23 @@ void writeSimpleFrame(StompConnector connector, String command,
 
 ///Write a data frame, such as SEND, ERROR.
 void writeDataFrame(StompConnector connector, String command,
-    Map<String, String> headers, String text, [List<int> bytes]) {
+    Map<String, String> headers, String string, [List<int> bytes]) {
   writeHeaders(connector, command, headers, endOfHeaders: false);
 
-  int len = 0;
-  if (bytes != null) {
-    len = bytes.length;
-  } else if (text != null && !text.isEmpty) {
-    bytes = encodeUtf8(text);
-    len = bytes.length;
+  if (headers == null || headers[CONTENT_LENGTH] == null) {
+    int len = 0;
+    if (bytes != null) {
+      len = bytes.length;
+    } else if (string != null && !string.isEmpty) {
+      bytes = encodeUtf8(string);
+      len = bytes.length;
+    }
+    connector..write(CONTENT_LENGTH)..write(':')
+      ..write(len.toString())..writeLF();
   }
-  connector..write("content-length:")
-    ..write(len.toString())..writeLF()..writeLF();
 
-  connector.write(text, bytes);
+  connector.writeLF();
+  connector.write(string, bytes);
   connector.writeEof();
 }
 
@@ -79,7 +82,7 @@ String _escape(String value) {
       case '\\': esc = '\\'; break;
     }
     if (esc != null) {
-      if (buf != null)
+      if (buf == null)
         buf = new StringBuffer();
       buf
         ..write(value.substring(pre, i))
