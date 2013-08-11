@@ -29,7 +29,7 @@ class Frame {
 }
 
 typedef void _OnFrame(Frame frame);
-typedef void _OnError(String message);
+typedef void _OnError(error, stackTrace);
 
 const String _EOF = '\x00';
 
@@ -64,7 +64,7 @@ class FrameParser {
   List<int> _bytebuf = [];
   StringBuffer _strbuf = new StringBuffer();
 
-  FrameParser(void onFrame(Frame frame), void onError(String message)):
+  FrameParser(void onFrame(Frame frame), [void onError(error, stackTrace)]):
     _onFrame = onFrame, _onError = onError;
 
   ///Adds an array of bytes (when the caller receives it)
@@ -75,8 +75,8 @@ class FrameParser {
           _addBodyFrag(null, bytes);
         else
           _addHeaderFrag(decodeUtf8(bytes));
-      } catch (ex) {
-        _errorFound(ex);
+      } catch (ex, st) {
+        _errorFound(ex, st);
       }
   }
   ///Adds a [String] (when the caller receives it)
@@ -87,8 +87,8 @@ class FrameParser {
           _addBodyFrag(string);
         else
           _addHeaderFrag(string);
-      } catch (ex) {
-        _errorFound(ex);
+      } catch (ex, st) {
+        _errorFound(ex, st);
       }
   }
   void _addHeaderFrag(String string) {
@@ -105,10 +105,15 @@ class FrameParser {
     }
 
     for (int pre = 0;;) { //for each line
-      final String line = string.substring(pre, i++);
+      final int end = i > pre && string[i - 1] == '\r' ? i - 1: i;
+      final String line = string.substring(pre, end);
+      pre = ++i;
+
       if (_state == _COMMAND) {
-        _frame.command = line;
-        _state = _HEADER;
+        if (!line.isEmpty) { //not required but skip empty lines for fault tolerance
+          _frame.command = line;
+          _state = _HEADER;
+        }
       } else if (line.isEmpty) {
         _state = _BODY;
         _bodylen = _frame._contentLength;
@@ -124,7 +129,7 @@ class FrameParser {
         _frame.headers[_unescape(name)] = _unescape(value);
       }
 
-      i = string.indexOf('\n', pre = i);
+      i = string.indexOf('\n', pre);
       if (i < 0) {
         if (pre < string.length)
           _strbuf.write(string.substring(pre));
@@ -154,12 +159,12 @@ class FrameParser {
       } else { //scan 0
         for (int i = 0, len = bytes.length; i < len; ++i)
           if (bytes[i] == 0) { //EOF
-            _frameBytes(bytes, i - 1);
+            _frameBytes(bytes, i);
             return;
           }
       }
       _bytebuf.addAll(bytes);
-        //Note: make copy since bytes might be resued by caller
+        //Note: make copy since bytes might be reused by caller
       return;
     }
 
@@ -186,7 +191,10 @@ class FrameParser {
   }
   void _frameBytes(List<int> bytes, int len) {
     final List<int> curr = bytes.sublist(0, len);
-    _frame.bytes = _bytebuf.isEmpty ? curr: _bytebuf..addAll(curr);
+    if (_bytebuf.isEmpty)
+      _frame.bytes = curr;
+    else
+      (_frame.bytes = _bytebuf).addAll(curr);
     if (bytes[len] == 0) //EOF
       ++len;
     _bytebuf = len < bytes.length ? bytes.sublist(len): [];
@@ -199,14 +207,17 @@ class FrameParser {
     _bodylen = null;
     _onFrame(frame);
   }
-  void _errorFound(error) {
+  void _errorFound(error, stackTrace) {
     _strbuf.clear();
     if (!_bytebuf.isEmpty)
       _bytebuf = [];
     _frame = new Frame();
     _bodylen = null;
 
-    _onError(error != null ? error.toString(): "Unknown");
+    if (_onError != null)
+      _onError(error, stackTrace);
+    else
+      print("$error\n$stackTrace");
   }
 }
 
@@ -214,8 +225,7 @@ String _unescape(String value) {
   StringBuffer buf;
   int pre = 0;
   for (int i = 0, len = value.length; i < len; ++i) {
-    final String cc = value[i];
-    if (cc == '\\') {
+    if (value[i] == '\\') {
       final int j = i + 1;
       if (j < len) {
         String esc;
@@ -234,11 +244,6 @@ String _unescape(String value) {
           pre = j + 1;
         }
       }
-    } else if (cc == '\r') { //ignore 0x0d
-      if (buf == null)
-        buf = new StringBuffer();
-      buf.write(value.substring(pre, i));
-      pre = i + 1;
     }
   }
   return buf != null ? (buf..write(value.substring(pre))).toString(): value;
