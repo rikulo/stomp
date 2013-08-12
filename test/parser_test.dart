@@ -1,6 +1,7 @@
 //Copyright (C) 2013 Potix Corporation. All Rights Reserved.
 //History: Sat, Aug 10, 2013  9:38:08 PM
 // Author: tomyeh
+library parser_test;
 
 import "dart:async";
 import "dart:io";
