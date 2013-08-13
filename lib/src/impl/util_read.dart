@@ -14,6 +14,15 @@ class Frame {
   String string;
   List<int> bytes;
 
+  ///Returns the String-typed message of this frame (never null).
+  ///It will detect if string or bytes is not null and pick up the right one.
+  String get message =>
+    string != null ? string: bytes != null ? decodeUtf8(bytes): "";
+  ///Returns the byte-array message of this frame (never null).
+  ///It will detect if string or bytes is not null and pick up the right one.
+  List<int> get messageBytes =>
+     bytes != null ? bytes: string != null ? encodeUtf8(string): [];
+
   ///Retrieve the content length from the header; null means not available
   int get _contentLength {
     if (headers != null) {
@@ -110,7 +119,7 @@ class FrameParser {
       pre = ++i;
 
       if (_state == _COMMAND) {
-        if (!line.isEmpty) { //not required but skip empty lines for fault tolerance
+        if (!line.isEmpty) { //skip heartbeat
           _frame.command = line;
           _state = _HEADER;
         }
@@ -198,14 +207,25 @@ class FrameParser {
     if (bytes[len] == 0) //EOF
       ++len;
     _bytebuf = len < bytes.length ? bytes.sublist(len): [];
-
     _frameFound();
   }
   void _frameFound() {
     final Frame frame = _frame;
     _frame = new Frame();
     _bodylen = null;
+    _state = _COMMAND;
     _onFrame(frame);
+
+    if (!_bytebuf.isEmpty) {
+      final List<int> bytes = _bytebuf;
+      _bytebuf = [];
+      addBytes(bytes);
+    }
+    if (!_strbuf.isEmpty) {
+      final String string = _strbuf.toString();
+      _strbuf.clear();
+      addString(string);
+    }
   }
   void _errorFound(error, stackTrace) {
     _strbuf.clear();

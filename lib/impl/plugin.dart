@@ -10,7 +10,7 @@ import "../stomp.dart" show StompClient;
 
 typedef void BytesCallback(List<int> data);
 typedef void StringCallback(String data);
-typedef void ErrorCallback(error);
+typedef void ErrorCallback(error, stackTrace);
 typedef void CloseCallback();
 
 /** A STOMP connector for binding with different networking, such as

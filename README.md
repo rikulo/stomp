@@ -8,7 +8,11 @@
 * [Git Repository](https://github.com/rikulo/stomp)
 * [Issues](https://github.com/rikulo/stomp/issues)
 
-> See also [Messa - Lightweight Dart Messaging Server](https://github.com/rikulo/messa).
+Stomp Dart Client is distributed under an Apache 2.0 License.
+
+[![Build Status](https://drone.io/github.com/rikulo/stomp/status.png)](https://drone.io/github.com/rikulo/stomp/latest)
+
+> See also [Ripple - Lightweight Dart Messaging Server](https://github.com/rikulo/ripple).
 
 ##Installation
 
@@ -29,12 +33,13 @@ Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the 
     import "package:stomp/vm.dart" show connect;
 
     void main() {
-      connect("foo.server.com").then((StompClient stomp) {
-        stomp.subscribeString("/foo", (String message) {
-          print("Recieve $message");
-        });
+      connect("foo.server.com").then((StompClient client) {
+        client.subscribeString("/foo",
+          (Map<String, String> headers, String message) {
+            print("Recieve $message");
+          });
 
-        stomp.sendString("/foo", "Hi, Stomp");
+        client.sendString("/foo", "Hi, Stomp");
       });
     }
 
@@ -60,3 +65,7 @@ The same as the above, except import `websocket.dart` instead of `vm.dart`:
 
 * Support STOMP 1.2 or above
 * Support UTF-8 encoding
+
+##Incompleteness
+
+* Heart beat not supported.

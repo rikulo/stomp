@@ -3,6 +3,23 @@
 // Author: tomyeh
 part of stomp_impl_util;
 
+//Commands//
+const String CONNECT = "CONNECT";
+const String STOMP = "STOMP";
+const String CONNECTED = "CONNECTED";
+const String DISCONNECT = "DISCONNECT";
+const String SEND = "SEND";
+const String SUBSCRIBE = "SUBSCRIBE";
+const String UNSUBSCRIBE = "UNSUBSCRIBE";
+const String MESSAGE = "MESSAGE";
+const String RECEIPT = "RECEIPT";
+const String ERROR = "ERROR";
+const String ACK = "ACK";
+const String NACK = "NACK";
+const String BEGIN = "BEGIN";
+const String COMMIT = "COMMIT";
+const String ABORT = "ABORT";
+
 /** Writes the headers (excluding body and End-of-Frame)
  *
  * * [endOfHeaders] - specifies whether to write an empty line to
@@ -35,7 +52,7 @@ void writeSimpleFrame(StompConnector connector, String command,
   connector.writeEof();
 }
 
-///Write a data frame, such as SEND, ERROR.
+///Write a data frame used by SEND, ERROR and MESSAGE.
 void writeDataFrame(StompConnector connector, String command,
     Map<String, String> headers, String string, [List<int> bytes]) {
   writeHeaders(connector, command, headers, endOfHeaders: false);
@@ -66,6 +83,19 @@ Future writeStreamFrame(StompConnector connector, String command,
   });
 }
 
+/** Adds the additional headers ([extra]) into a given header ([headers]).
+ * If both [headers] and [extra] are null, null is returned.
+ * Otherwise, a non-null map is returned.
+ */
+Map<String, String> addHeaders(Map<String, String> headers, Map<String, String> extra) {
+  if (headers != null || extra != null) {
+    if (headers == null)
+      headers = new LinkedHashMap();
+    if (extra != null)
+      headers.addAll(extra);
+  }
+  return headers;
+}
 String _escape(String value) {
   if (value == null)
     return "";

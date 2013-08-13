@@ -32,7 +32,7 @@ import "impl/plugin.dart" show StompConnector;
 Future<StompClient> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message)})
+    void onError(String message, stackTrace)})
 => StompClient.connect(new _WSStompConnector(url),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
     onDisconnect: onDisconnect, onError: onError);

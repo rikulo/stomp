@@ -5,19 +5,20 @@ library stomp;
 
 import "dart:async";
 import "dart:json" as Json;
-import "dart:collection" show LinkedHashMap;
+import "dart:math" show max;
+import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
 import "package:meta/meta.dart";
 
 import "impl/plugin.dart" show StompConnector;
 import "impl/util.dart";
 
 part "src/stomp_impl.dart";
+part "src/stomp_util.dart";
 
 ///The ACK mode.
 class Ack {
   final String id;
   const Ack._(this.id);
-  String toString() => id;
 }
 const Ack AUTO = const Ack._("auto");
 const Ack CLIENT = const Ack._("client");
@@ -35,7 +36,7 @@ abstract class StompClient {
    * It is null if the server doesn't support it.
    */
   String get session;
-  ///The information about the STOMP server, such as `messa/1.0.0`.
+  ///The information about the STOMP server, such as `ripple/1.0.0`.
   String get server;
   /** The heart beat. A two-element array. The first element is
    * the smallest number of milliseconds that the server can do.
@@ -56,7 +57,7 @@ abstract class StompClient {
   static Future<StompClient> connect(StompConnector connector, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message)}) {
+    void onError(String message, stackTrace)}) {
     if (connector == null)
       throw new ArgumentError("Required: connector. Use stomp_vm's connect() instead.");
 
@@ -75,7 +76,7 @@ abstract class StompClient {
    * * [message] - the message. It shall be an array of bytes (i.e., only the lowest
    * 8 bits are meaningful, aka, octets).
    */
-  Future sendBytes(String destination, List<int> message,
+  void sendBytes(String destination, List<int> message,
       {Map<String, String> headers});
   /** Sends a String-typed message.
    *
@@ -86,7 +87,7 @@ abstract class StompClient {
    *
    * * [message] - the message.
    */
-  Future sendString(String destination, String message,
+  void sendString(String destination, String message,
       {Map<String, String> headers});
   /** Sends a JSON message.
    *
@@ -98,7 +99,7 @@ abstract class StompClient {
    * * [message] - the message. It must be a JSON object (including null).
    * In other words, it must be able to *jsonized* into a JSON string.
    */
-  Future sendJson(String destination, message,
+  void sendJson(String destination, message,
       {Map<String, String> headers});
   /** Sends a message read from a given [Stream].
    * It saves the memory use since the message is *piping* from [Stream]
@@ -112,6 +113,9 @@ abstract class StompClient {
    * contain the NULL octet (i.e., value 0). For example, you can encode as base64.
    * * Unlike other send methods, [sendBlob] won't set the content-length header.
    * If you know the length in advance, you can pass it into [headers].
+   * * The return [Future] instance indicated when the message has been sent.
+   * It is important to note than before it completes, you can send other
+   * messages. Otherwise, an exception is thrown.
    */
   Future sendBlob(String destination, Stream<List<int>> message,
       {Map<String, String> headers});
@@ -122,8 +126,12 @@ abstract class StompClient {
    *     stomp.subscribe("/foo", (List<int> message) {
    *       //handle message (an array of octets)
    *     });
+   *
+   * * [id] - specifies the id of the subscription. It must be unique
+   * for each [StompClient] (until [unsubscribe] is called).
+   * * [destination] - specifies the destination to subscribe.
    */
-  Future subscribeBytes(String destination,
+  void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
       {Ack ack: AUTO});
   /** Subscribes for listening a given destination; assuming the message
@@ -132,8 +140,12 @@ abstract class StompClient {
    *     stomp.subscribe("/foo", (String message) {
    *       //handle message
    *     });
+   *
+   * * [id] - specifies the id of the subscription. It must be unique
+   * for each [StompClient] (until [unsubscribe] is called).
+   * * [destination] - specifies the destination to subscribe.
    */
-  Future subscribeString(String destination,
+  void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
       {Ack ack: AUTO});
   /** Subscribes for listening a given destination; assuming the message
@@ -142,8 +154,12 @@ abstract class StompClient {
    *     stomp.subscribe("/foo", (message) {
    *       //handle message (it is a JSON object decoded from a JSON string)
    *     });
+   *
+   * * [id] - specifies the id of the subscription. It must be unique
+   * for each [StompClient] (until [unsubscribe] is called).
+   * * [destination] - specifies the destination to subscribe.
    */
-  Future subscribeJson(String destination,
+  void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
       {Ack ack: AUTO});
   /** Subscribes for listening to a given destination.
@@ -156,9 +172,19 @@ abstract class StompClient {
    *       }, onDone: () {
    *         //handle done
    *       });
-   *     })
+   *     });
+   *
+   * * [id] - specifies the id of the subscription. It must be unique
+   * for each [StompClient] (until [unsubscribe] is called).
+   * * [destination] - specifies the destination to subscribe.
    */
-  Future subscribeBlob(String destination,
+  void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
       {Ack ack: AUTO});
+
+  /** Unsubscribes.
+   *
+   * * [id] - specifies the id of the subscription.
+   */
+  void unsubscribe(String id);
 }
