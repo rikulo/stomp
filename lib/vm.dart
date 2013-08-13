@@ -32,7 +32,7 @@ import "impl/plugin.dart" show BytesStompConnector;
 Future<StompClient> connect(address, {int port: 61626,
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message, stackTrace)})
+    void onError(String message, String detail, [Map<String, String> headers])})
 => Socket.connect(address, port).then((Socket socket)
   => StompClient.connect(new _SocketStompConnector(socket),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
@@ -44,6 +44,12 @@ class _SocketStompConnector extends BytesStompConnector {
   final Socket _socket;
 
   _SocketStompConnector(this._socket);
+
+  @override
+  Future close() {
+    _socket.destroy();
+    return new Future.value();
+  }
 
   @override
   void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone()) {

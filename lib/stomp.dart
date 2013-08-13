@@ -44,6 +44,8 @@ abstract class StompClient {
    * server would like to get.
    */
   List<int> get heartbeat;
+  ///Whether it is disconnected from the server.
+  bool get isDisconnected;
 
   /** Connects a STOMP server, and instantiates a [StompClient]
    * to represent the connection.
@@ -57,7 +59,7 @@ abstract class StompClient {
   static Future<StompClient> connect(StompConnector connector, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message, stackTrace)}) {
+    void onError(String message, String detail, [Map<String, String> headers])}) {
     if (connector == null)
       throw new ArgumentError("Required: connector. Use stomp_vm's connect() instead.");
 
@@ -133,7 +135,7 @@ abstract class StompClient {
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO});
+      {Ack ack: AUTO, String receipt});
   /** Subscribes for listening a given destination; assuming the message
    * are a String.
    *
@@ -147,7 +149,7 @@ abstract class StompClient {
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO});
+      {Ack ack: AUTO, String receipt});
   /** Subscribes for listening a given destination; assuming the message
    * are a JSON object.
    *
@@ -161,7 +163,7 @@ abstract class StompClient {
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO});
+      {Ack ack: AUTO, String receipt});
   /** Subscribes for listening to a given destination.
    * Like [sendBlob], it is useful if you'd like to receive a huge amount of
    * message (without storing them in memory first).
@@ -174,17 +176,56 @@ abstract class StompClient {
    *       });
    *     });
    *
-   * * [id] - specifies the id of the subscription. It must be unique
-   * for each [StompClient] (until [unsubscribe] is called).
+   * * [id] - specifies the id of the subscription, an arbitrary string.
+   * It must be unique for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO});
+      {Ack ack: AUTO, String receipt});
 
   /** Unsubscribes.
    *
    * * [id] - specifies the id of the subscription.
    */
   void unsubscribe(String id);
+
+  /** Adds a listener called when the RECEIPT frame of the given receipt-id
+   * is received.
+   *
+   * You can register any number of listeners as long as [id] is different.
+   *
+   * * [receipt] - specifies the receipt. It must match the receipt header
+   * of the frame sent to the server.
+   */
+  void receipt(String receipt, void onReceipt(String receipt));
+  /** Removes the listener added by [receipt].
+   */
+  void unreceipt(String receipt);
+
+  /** Acknowledges the consumption of a message.
+   *
+   * * [id] - the acknowledge id. It can be the ack header of
+   * the `onMessage` callback of [subscribeBytes], [subscribeString]...
+   * * [transaction] - indicates the message acknowledgment is part
+   * of the named transaction.
+   */
+  void ack(String id, {String transaction});
+  /** The opposite of [ack].
+   */
+  void nack(String id, {String transaction});
+
+  /** Starts a transaction.
+   * Transactions in this case apply to sending and acknowledging.
+   *
+   * * [transaction] - specifies the name (aka., id) of the transaction.
+   * It shall match the transaction argument of [commit] and [abort].
+   */
+  void begin(String transaction, {String receipt});
+  /** Commits a transaction.
+   */
+  void commit(String transaction, {String receipt});
+  /** Aborts a transaction.
+   */
+  void abort(String transaction, {String receipt});
 }

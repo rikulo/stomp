@@ -32,7 +32,7 @@ import "impl/plugin.dart" show StompConnector;
 Future<StompClient> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message, stackTrace)})
+    void onError(String message, String detail, [Map<String, String> headers])})
 => StompClient.connect(new _WSStompConnector(url),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
     onDisconnect: onDisconnect, onError: onError);
@@ -56,10 +56,16 @@ class _WSStompConnector extends StompConnector {
           onString(sdata);
       }
     }, onError: (error) {
-      onError(error);
+      onError(error, getAttachedStackTrace(error));
     }, onDone: () {
       onClose();
     });
+  }
+
+  @override
+  Future close() {
+    _socket.close();
+    return new Future.value();
   }
 
   @override
@@ -89,11 +95,13 @@ class _WSStompConnector extends StompConnector {
     _buf.write(data);
   }
   void _flush() {
-    if (!_buf.isEmpty) {
-      final String str = _buf.toString();
-      _buf.clear();
-      _socket.send(str);
-    }
+    new Future(() { //to accumulate multiple _flush into one, if any
+      if (!_buf.isEmpty) {
+        final String str = _buf.toString();
+        _buf.clear();
+        _socket.send(str);
+      }
+    });
   }
 
   @override

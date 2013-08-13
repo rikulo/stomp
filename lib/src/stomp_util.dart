@@ -10,21 +10,41 @@ class _Subscriber {
   final String id;
   final String destination;
   final int type;
-  final Function callback;
+  final Function onMessage;
   final Ack ack;
 
   _Subscriber.bytes(this.id, this.destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      this.ack): type = _SUB_BYTES, callback = onMessage;
+      this.ack): type = _SUB_BYTES, this.onMessage = onMessage;
   _Subscriber.string(this.id, this.destination,
       void onMessage(Map<String, String> headers, String message),
-      this.ack): type = _SUB_STRING, callback = onMessage;
+      this.ack): type = _SUB_STRING, this.onMessage = onMessage;
   _Subscriber.json(this.id, this.destination,
       void onMessage(Map<String, String> headers, message),
-      this.ack): type = _SUB_JSON, callback = onMessage;
+      this.ack): type = _SUB_JSON, this.onMessage = onMessage;
   _Subscriber.blob(this.id, this.destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      this.ack): type = _SUB_BLOB, callback = onMessage;
+      this.ack): type = _SUB_BLOB, this.onMessage = onMessage;
+
+  void onFrame(Frame frame) {
+    new Future(() { //to avoid the callback might cause some effect
+      switch (type) {
+        case _SUB_BYTES:
+          onMessage(frame.headers, frame.messageBytes);
+          break;
+        case _SUB_STRING:
+          onMessage(frame.headers, frame.message);
+          break;
+        case _SUB_JSON:
+          onMessage(frame.headers, Json.parse(frame.message));
+          break;
+        case _SUB_BLOB:
+          onMessage(frame.headers,
+            new Stream.fromIterable([frame.messageBytes]));
+          break;
+      }
+    });
+  }
 }
 
 ///Handles heart-beat sent back from the server.

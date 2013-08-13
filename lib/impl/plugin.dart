@@ -17,6 +17,10 @@ typedef void CloseCallback();
  * WebSocket and Socket.
  */
 abstract class StompConnector {
+  /** Closes the connector.
+   */
+  Future close();
+
   /** Write an array of bytes or a [String].
    *
    * *Implementation Notes*
@@ -76,7 +80,7 @@ abstract class BytesStompConnector extends StompConnector {
       if (data != null && !data.isEmpty)
         onBytes(data);
     }, (error) {
-      onError(error);
+      onError(error, getAttachedStackTrace(error));
     }, () {
       onClose();
     });
@@ -118,11 +122,13 @@ abstract class BytesStompConnector extends StompConnector {
       _buf[_buflen++] = bytes[i];
   }
   void _flush() {
-    if (_buflen > 0) {
-      final int len = _buflen;
-      _buflen = 0;
-      writeBytes_(_buf.sublist(0, len));
-    }
+    new Future(() { //to accumulate multiple _flush into one, if any
+      if (_buflen > 0) {
+        final int len = _buflen;
+        _buflen = 0;
+        writeBytes_(_buf.sublist(0, len));
+      }
+    });
   }
 
   @override

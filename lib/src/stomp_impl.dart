@@ -4,7 +4,8 @@
 part of stomp;
 
 typedef void _DisconnectCallback();
-typedef void _ErrorCallback(String message, stackTrace);
+typedef void _ErrorCallback(String message, String detail, [Map<String, String> headers]);
+typedef void _ReceiptCallback(String receipt);
 
 class _StompClient implements StompClient {
   final StompConnector _connector;
@@ -12,8 +13,12 @@ class _StompClient implements StompClient {
   String _session, _server;
   final _DisconnectCallback _onDisconnect;
   final _ErrorCallback _onError;
-  ///<String id, _Subscriber>
+  ///<String subscription-id, _Subscriber>
   final Map<String, _Subscriber> _subscribers = new HashMap();
+  ///<String receipt-id, _ReceiptCallback>
+  final Map<String, _ReceiptCallback> _receipts = new HashMap();
+  Completer _connecting;
+  bool _sendingBlob = false, _disconnected = false;
 
   /** A session identifier that uniquely identifies the session.
    * It is null if the server doesn't support it.
@@ -27,13 +32,12 @@ class _StompClient implements StompClient {
    * server would like to get.
    */
   final List<int> heartbeat = new List(2);
-  Completer _connecting;
-  bool _sendingBlob = false;
+  bool get isDisconnected => _disconnected;
 
   static Future<StompClient> connect(StompConnector connector,
       String host, String login, String passcode, List<int> heartbeat,
       void onDisconnect(),
-      void onError(String message, stackTrace)) {
+      void onError(String message, String detail, [Map<String, String> headers])) {
     _StompClient client = new _StompClient(connector, onDisconnect, onError);
     client._connecting = new Completer();
 
@@ -62,7 +66,6 @@ class _StompClient implements StompClient {
   }
   void _init() {
     _parser = new FrameParser((Frame frame) {
-print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
       final _FrameHandler handler = _frameHandlers[frame.command];
       if (handler != null)
         handler(this, frame);
@@ -83,20 +86,45 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
         _handleErr(error, stackTrace);
       }
       ..onClose = () {
-        //TODO
+        _disconnected = true;
+        _subscribers.clear();
+        _receipts.clear();
+        if (_onDisconnect != null)
+          _onDisconnect();
       };
   }
   void _handleErr(error, [stackTrace]) {
+    final String message = stackTrace != null ? "$error\n$stackTrace": "$error";
     if (_onError != null) {
-      _onError("$error", stackTrace);
+      _onError("$error", message);
     } else {
-      print(stackTrace != null ? "$error\n$stackTrace": "$error");
+      print(message);
     }
   }
 
   @override
   Future disconnect({String receipt}) {
+    _checkSend();
+    _disconnected = true;
 
+    Completer completer;
+    Map<String, String> headers;
+
+    if (receipt != null) {
+      completer = new Completer();
+      headers = {"receipt": receipt};
+      this.receipt(receipt, (_) {
+        _connector.close().then((_) {
+          completer.complete();
+        });
+      });
+    }
+
+    writeSimpleFrame(_connector, DISCONNECT, headers);
+
+    return receipt != null ? completer.future:
+      new Future.delayed(const Duration(milliseconds: 10), () => _connector.close());
+        //delay the close a bit such that DISCONNECT will be sent successfully
   }
 
   @override
@@ -151,35 +179,39 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
   void _checkSend() {
     if (_sendingBlob)
       throw new StateError("Previous sending of BLOB not completed yet");
+    if (_disconnected)
+      throw new StateError("Disconnected");
   }
 
 
   @override
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO}) {
-    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack));
+      {Ack ack: AUTO, String receipt}) {
+    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack), receipt);
   }
   @override
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO}) {
-    _subscribe(new _Subscriber.string(id, destination, onMessage, ack));
+      {Ack ack: AUTO, String receipt}) {
+    _subscribe(new _Subscriber.string(id, destination, onMessage, ack), receipt);
   }
   @override
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO}) {
-    _subscribe(new _Subscriber.json(id, destination, onMessage, ack));
+      {Ack ack: AUTO, String receipt}) {
+    _subscribe(new _Subscriber.json(id, destination, onMessage, ack), receipt);
   }
   @override
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO}) {
-    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack));
+      {Ack ack: AUTO, String receipt}) {
+    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack), receipt);
   }
   @override
   void unsubscribe(String id) {
+    _checkSend();
+
     final _Subscriber sub = _subscribers[id];
     if (sub != null) {
       _subscribers.remove(id);
@@ -188,7 +220,20 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
     }
   }
 
-  void _subscribe(_Subscriber subscriber) {
+  @override
+  void receipt(String receipt, void onReceipt(String receipt)) {
+    if (_receipts.containsKey(receipt))
+      throw new StateError("Receipt $receipt can't be listened twice");
+    _receipts[receipt] = onReceipt;
+  }
+  @override
+  void unreceipt(String receipt) {
+    _receipts.remove(receipt);
+  }
+
+  void _subscribe(_Subscriber subscriber, String receipt) {
+    _checkSend();
+
     final String id = subscriber.id;
     if (_subscribers.containsKey(id))
       throw new StateError("Subscription $id can't be subscribed twice");
@@ -202,8 +247,50 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
     final Ack ack = subscriber.ack;
     if (ack != AUTO)
       headers["ack"] = ack.id;
+    if (receipt != null)
+      headers["receipt"] = receipt;
 
     writeSimpleFrame(_connector, SUBSCRIBE, headers);
+  }
+
+  @override
+  void ack(String id, {String transaction}) {
+    _ack(ACK, id, transaction);
+  }
+  @override
+  void nack(String id, {String transaction}) {
+    _ack(NACK, id, transaction);
+  }
+  void _ack(String command, String id, String transaction) {
+    _checkSend();
+
+    final Map<String, String> headers = new LinkedHashMap();
+    headers["id"] = id;
+    if (transaction != null)
+      headers["transaction"] = transaction;
+    writeSimpleFrame(_connector, command, headers);
+  }
+
+  @override
+  void begin(String transaction, {String receipt}) {
+    _tx(BEGIN, transaction, receipt);
+  }
+  @override
+  void commit(String transaction, {String receipt}) {
+    _tx(COMMIT, transaction, receipt);
+  }
+  @override
+  void abort(String transaction, {String receipt}) {
+    _tx(BEGIN, transaction, receipt);
+  }
+  void _tx(String command, String transaction, String receipt) {
+    _checkSend();
+
+    final Map<String, String> headers = new LinkedHashMap();
+    headers["transaction"] = transaction;
+    if (receipt != null)
+      headers["receipt"] = receipt;
+    writeSimpleFrame(_connector, command, headers);
   }
 
   //Frame Handlers//
@@ -228,7 +315,14 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
       _connecting = null;
       connecting.completeError(frame.message);
     } else {
-      _handleErr(frame.message);
+      final Map<String, String> headers = frame.headers;
+      final String message = headers != null ? headers["message"]: null;
+      final String detail = frame.message;
+      if (_onError != null)
+        _onError(message, detail, headers);
+      else
+        print(
+          message != null ? detail != null ? "$message\n$detail": message: detail);
     }
   }
 
@@ -238,24 +332,19 @@ print("<<from server:${frame.command}:${frame.headers}:${frame.message}");
       final String id = headers["subscription"];
       if (id != null) {
         final _Subscriber sub = _subscribers[id];
-        if (sub != null && sub.destination == headers["destination"]) {
-          switch (sub.type) {
-            case _SUB_BYTES:
-              sub.callback(frame.headers, frame.messageBytes);
-              break;
-            case _SUB_STRING:
-              sub.callback(frame.headers, frame.message);
-              break;
-            case _SUB_JSON:
-              sub.callback(frame.headers, Json.parse(frame.message));
-              break;
-            case _SUB_BLOB:
-              sub.callback(frame.headers,
-                new Stream.fromIterable([frame.messageBytes]));
-              break;
-          }
-        }
+        if (sub != null && sub.destination == headers["destination"])
+          sub.onFrame(frame);
       }
+    }
+  }
+
+  void _receipt(Frame frame) {
+    final Map<String, String> headers = frame.headers;
+    if (headers != null) {
+      final String id = headers["receipt-id"];
+      final _ReceiptCallback callback = _receipts[id];
+      if (callback != null)
+        callback(id);
     }
   }
 }
@@ -270,5 +359,8 @@ final Map<String, _FrameHandler> _frameHandlers = {
   },
   "MESSAGE": (_StompClient client, Frame frame) {
     client._message(frame);
+  },
+  "RECEIPT": (_StompClient client, Frame frame) {
+    client._receipt(frame);
   },
 };

@@ -7,7 +7,9 @@ part of echo_test;
  * so we can test it on both VM and browser.
  */
 Future testEcho(address)
-=> connect(address).then((StompClient client) {
+=> connect(address, onDisconnect: () {
+  print("disconnected");
+}).then((StompClient client) {
   final String destination = "/foo";
   final List<String> sends = ["1. apple", "2. orange\nand 2nd line", "3. mango"];
   final List<String> sendExtraHeader = ["123", "abc:", "xyz"];
@@ -26,7 +28,7 @@ print(">>send $i: ${sends[i]}");
     client.sendString(destination, sends[i], headers: hds);
   }
 
-  return new Future.delayed(const Duration(seconds: 1), () {
+  return new Future.delayed(const Duration(milliseconds: 200), () {
     expect(receives.length, sends.length);
     for (int i = 0; i < sends.length; ++i) {
       expect(receives[i], sends[i]);
@@ -34,5 +36,6 @@ print(">>send $i: ${sends[i]}");
     }
 
     client.unsubscribe("0");
+    client.disconnect();
   });
 });
