@@ -8,7 +8,7 @@ part of echo_test;
  */
 Future testEcho(address)
 => connect(address, onDisconnect: () {
-  print("disconnected");
+  print("Disconnected");
 }).then((StompClient client) {
   final String destination = "/foo";
   final List<String> sends = ["1. apple", "2. orange\nand 2nd line", "3. mango"];
@@ -23,7 +23,6 @@ Future testEcho(address)
     });
 
   for (int i = 0; i < sends.length; ++i) {
-print(">>send $i: ${sends[i]}");
     final hds = {"extra": sendExtraHeader[i]};
     client.sendString(destination, sends[i], headers: hds);
   }
@@ -35,7 +34,7 @@ print(">>send $i: ${sends[i]}");
       expect(receiveExtraHeader[i], sendExtraHeader[i]);
     }
 
-    client.unsubscribe("0");
+    //client.unsubscribe("0"); //optional
     client.disconnect();
   });
 });
