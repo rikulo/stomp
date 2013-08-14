@@ -4,7 +4,7 @@
 library stomp_impl_plugin;
 
 import "dart:async";
-import "dart:utf" show encodeUtf8;
+import "dart:utf" show encodeUtf8, decodeUtf8;
 import "package:meta/meta.dart";
 import "../stomp.dart" show StompClient;
 
@@ -66,31 +66,17 @@ abstract class StompConnector {
 const int _BUFFER_SIZE = 16 * 1024;
 const int _MIN_FRAME_SIZE = _BUFFER_SIZE ~/ 4;
 
-/** A skeletal implementation for binary connector.
- * The subclass shall implement [listenBytes_], [writeBytes_]
- * and [writeStream_].
+const List<int> _EOF = const [0];
+const List<int> _LF = const [10];
+const String _EOF_STRING = '\x00';
+
+/** A skeletal implementation for bytes-based connector.
+ * The subclass shall implement [writeBytes_] and [writeStream_].
  */
 abstract class BytesStompConnector extends StompConnector {
   final List<int> _buf = new List(_BUFFER_SIZE);
   int _buflen = 0;
 
-  BytesStompConnector() {
-    ///Note: when this method is called, onBytes/onError/onClose are not set yet
-    listenBytes_((List<int> data) {
-      if (data != null && !data.isEmpty)
-        onBytes(data);
-    }, (error) {
-      onError(error, getAttachedStackTrace(error));
-    }, () {
-      onClose();
-    });
-  }
-
-  /** Adds listeners to this connector.
-   * The deriving class shall provide an implementation.
-   * It is called internally when the constructor is called.
-   */
-  void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone());
   /** Writes bytes (aka., octets) for sending to the peer.
    * The deriving class shall provide an implementation.
    * It is called only internally.
@@ -103,7 +89,7 @@ abstract class BytesStompConnector extends StompConnector {
 
   @override
   Future writeStream(Stream<List<int>> stream) {
-    _flush();
+    _flushAsync();
     return writeStream_(stream);
   }
 
@@ -122,13 +108,14 @@ abstract class BytesStompConnector extends StompConnector {
       _buf[_buflen++] = bytes[i];
   }
   void _flush() {
-    new Future(() { //to accumulate multiple _flush into one, if any
-      if (_buflen > 0) {
-        final int len = _buflen;
-        _buflen = 0;
-        writeBytes_(_buf.sublist(0, len));
-      }
-    });
+    if (_buflen > 0) {
+      final int len = _buflen;
+      _buflen = 0;
+      writeBytes_(_buf.sublist(0, len));
+    }
+  }
+  void _flushAsync() { //to accumulate multiple _flush into one, if any
+    new Future(() {_flush();});
   }
 
   @override
@@ -142,7 +129,7 @@ abstract class BytesStompConnector extends StompConnector {
   @override
   void writeEof() {
     _write(_EOF);
-    _flush();
+    _flushAsync();
   }
   @override
   void writeLF() {
@@ -150,5 +137,76 @@ abstract class BytesStompConnector extends StompConnector {
   }
 }
 
-const List<int> _EOF = const [0];
-const List<int> _LF = const [10];
+/** A skeletal implementation for String-based connector.
+ * The subclass shall implement [writeString_].
+ */
+abstract class StringStompConnector extends StompConnector {
+  final StringBuffer _buf = new StringBuffer();
+
+  /** Writes bytes (aka., octets) for sending to the peer.
+   * The deriving class shall provide an implementation.
+   * It is called only internally.
+   */
+  void writeString_(String string);
+
+  @override
+  void write(String string, [List<int> bytes]) {
+    if (string != null) {
+      _write(string);
+    } else if (bytes != null && !bytes.isEmpty) {
+      _write(decodeUtf8(bytes));
+    }
+  }
+  void _write(String data) {
+    final int len = data.length;
+    if (_buf.length + len >= _BUFFER_SIZE) { //_buf will be full
+      _flush();
+
+      for (int i = 0;;) {
+        final int j = i + _BUFFER_SIZE;
+        if (j > len) {
+          data = data.substring(i);
+          break;
+        }
+        writeString_(data.substring(i, j));
+        i = j;
+      }
+
+    }
+    _buf.write(data);
+  }
+  void _flush() {
+    if (!_buf.isEmpty) {
+      final String str = _buf.toString();
+      _buf.clear();
+      writeString_(str);
+    }
+  }
+  void _flushAsync() { //to accumulate multiple _flush into one, if any
+    new Future(() {_flush();});
+  }
+
+  @override
+  Future writeStream(Stream<List<int>> stream) {
+    _flushAsync();
+
+    final Completer completer = new Completer();
+    stream.listen((List<int> data) {
+      write(null, data);
+    }, onDone: () {
+      completer.complete();
+    }, onError: (error) {
+      completer.completeError(error);
+    });
+    return completer.future;
+  }
+  @override
+  void writeEof() {
+    _write(_EOF_STRING);
+    _flushAsync();
+  }
+  @override
+  void writeLF() {
+    _write("\n");
+  }
+}

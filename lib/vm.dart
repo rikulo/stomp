@@ -43,7 +43,19 @@ Future<StompClient> connect(address, {int port: 61626,
 class _SocketStompConnector extends BytesStompConnector {
   final Socket _socket;
 
-  _SocketStompConnector(this._socket);
+  _SocketStompConnector(this._socket) {
+    _init();
+  }
+  void _init() {
+    _socket.listen((List<int> data) {
+      if (data != null && !data.isEmpty)
+        onBytes(data);
+    }, onError: (error) {
+      onError(error, getAttachedStackTrace(error));
+    }, onDone: () {
+      onClose();
+    });
+  }
 
   @override
   Future close() {
@@ -51,10 +63,6 @@ class _SocketStompConnector extends BytesStompConnector {
     return new Future.value();
   }
 
-  @override
-  void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone()) {
-    _socket.listen(onData, onError: onError, onDone: onDone);
-  }
   @override
   void writeBytes_(List<int> bytes) {
     _socket.add(bytes);
