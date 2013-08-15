@@ -9,7 +9,7 @@ DIR=$( cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
 # canonicalization.
 pushd $DIR/..
 echo Analyzing library for warnings or type errors
-dartanalyzer --fatal-warnings --fatal-type-errors lib/*.dart \
+dartanalyzer --fatal-warnings --fatal-type-errors lib/*.dart lib/impl/*.dart \
   || echo -e "Ignoring analyzer errors"
 
 for fn in `grep -l 'main[(][)]' test/*.dart`; do
