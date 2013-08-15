@@ -8,7 +8,7 @@ import "dart:io";
 import "package:meta/meta.dart";
 
 import "stomp.dart" show StompClient;
-import "impl/plugin.dart" show BytesStompConnector;
+import "impl/plugin_vm.dart" show SocketStompConnector;
 
 /** Connects a STOMP server, and instantiates a [StompClient]
  * to represent the connection.
@@ -34,40 +34,6 @@ Future<StompClient> connect(address, {int port: 61626,
     void onDisconnect(),
     void onError(String message, String detail, [Map<String, String> headers])})
 => Socket.connect(address, port).then((Socket socket)
-  => StompClient.connect(new _SocketStompConnector(socket),
+  => StompClient.connect(new SocketStompConnector(socket),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
     onDisconnect: onDisconnect, onError: onError));
-
-/** The implementation on top of [Socket].
- */
-class _SocketStompConnector extends BytesStompConnector {
-  final Socket _socket;
-
-  _SocketStompConnector(this._socket) {
-    _init();
-  }
-  void _init() {
-    _socket.listen((List<int> data) {
-      if (data != null && !data.isEmpty)
-        onBytes(data);
-    }, onError: (error) {
-      onError(error, getAttachedStackTrace(error));
-    }, onDone: () {
-      onClose();
-    });
-  }
-
-  @override
-  Future close() {
-    _socket.destroy();
-    return new Future.value();
-  }
-
-  @override
-  void writeBytes_(List<int> bytes) {
-    _socket.add(bytes);
-  }
-  @override
-  Future writeStream_(Stream<List<int>> stream)
-  => _socket.addStream(stream);
-}
