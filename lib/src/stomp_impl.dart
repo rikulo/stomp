@@ -351,16 +351,16 @@ class _StompClient implements StompClient {
 
 typedef void _FrameHandler(_StompClient client, Frame frame);
 final Map<String, _FrameHandler> _frameHandlers = {
-  "CONNECTED": (_StompClient client, Frame frame) {
+  CONNECTED: (_StompClient client, Frame frame) {
     client._connected(frame);
   },
-  "ERROR": (_StompClient client, Frame frame) {
+  ERROR: (_StompClient client, Frame frame) {
     client._error(frame);
   },
-  "MESSAGE": (_StompClient client, Frame frame) {
+  MESSAGE: (_StompClient client, Frame frame) {
     client._message(frame);
   },
-  "RECEIPT": (_StompClient client, Frame frame) {
+  RECEIPT: (_StompClient client, Frame frame) {
     client._receipt(frame);
   },
 };
