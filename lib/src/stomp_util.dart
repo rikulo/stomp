@@ -36,7 +36,7 @@ class _Subscriber {
           onMessage(frame.headers, frame.message);
           break;
         case _SUB_JSON:
-          onMessage(frame.headers, Json.parse(frame.message));
+          onMessage(frame.headers, JSON.decode(frame.message));
           break;
         case _SUB_BLOB:
           onMessage(frame.headers,
