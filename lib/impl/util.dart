@@ -4,7 +4,7 @@
 library stomp_impl_util;
 
 import "dart:async";
-import "dart:utf";
+import "dart:convert" show UTF8;
 import "dart:collection" show LinkedHashMap;
 import "plugin.dart" show StompConnector;
 

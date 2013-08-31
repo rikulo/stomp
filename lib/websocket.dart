@@ -5,7 +5,6 @@ library stomp_websocket;
 
 import "dart:async";
 import "dart:html" show WebSocket, MessageEvent, ByteBuffer;
-import "dart:utf" show decodeUtf8;
 import "package:meta/meta.dart";
 
 import "stomp.dart" show StompClient;

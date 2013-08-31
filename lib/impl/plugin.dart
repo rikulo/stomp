@@ -4,9 +4,8 @@
 library stomp_impl_plugin;
 
 import "dart:async";
-import "dart:utf" show encodeUtf8, decodeUtf8;
+import "dart:convert" show UTF8;
 import "package:meta/meta.dart";
-import "../stomp.dart" show StompClient;
 
 typedef void BytesCallback(List<int> data);
 typedef void StringCallback(String data);
@@ -123,7 +122,7 @@ abstract class BytesStompConnector extends StompConnector {
     if (bytes != null) {
        _write(bytes);
     } else if (string != null && !string.isEmpty) {
-      _write(encodeUtf8(string));
+      _write(UTF8.encode(string));
     }
   }
   @override
@@ -154,7 +153,7 @@ abstract class StringStompConnector extends StompConnector {
     if (string != null) {
       _write(string);
     } else if (bytes != null && !bytes.isEmpty) {
-      _write(decodeUtf8(bytes));
+      _write(UTF8.decode(bytes));
     }
   }
   void _write(String data) {

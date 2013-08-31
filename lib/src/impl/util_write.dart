@@ -62,7 +62,7 @@ void writeDataFrame(StompConnector connector, String command,
     if (bytes != null) {
       len = bytes.length;
     } else if (string != null && !string.isEmpty) {
-      bytes = encodeUtf8(string);
+      bytes = UTF8.encode(string);
       len = bytes.length;
     }
     connector..write(CONTENT_LENGTH)..write(':')

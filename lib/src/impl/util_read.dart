@@ -17,11 +17,11 @@ class Frame {
   ///Returns the String-typed message of this frame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
   String get message =>
-    string != null ? string: bytes != null ? decodeUtf8(bytes): "";
+    string != null ? string: bytes != null ? UTF8.decode(bytes): "";
   ///Returns the byte-array message of this frame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
   List<int> get messageBytes =>
-     bytes != null ? bytes: string != null ? encodeUtf8(string): [];
+     bytes != null ? bytes: string != null ? UTF8.encode(string): [];
 
   ///Retrieve the content length from the header; null means not available
   int get _contentLength {
@@ -83,7 +83,7 @@ class FrameParser {
         if (_state == _BODY)
           _addBodyFrag(null, bytes);
         else
-          _addHeaderFrag(decodeUtf8(bytes));
+          _addHeaderFrag(UTF8.decode(bytes));
       } catch (ex, st) {
         _errorFound(ex, st);
       }
@@ -150,12 +150,12 @@ class FrameParser {
   void _addBodyFrag(String string, [List<int> bytes]) {
     //handle in bytes if _bodylen is specified
     if (_bodylen != null && bytes == null)
-      bytes = encodeUtf8(string);
+      bytes = UTF8.encode(string);
 
     if (bytes != null) { //use bytes
       if (!_strbuf.isEmpty) {
         assert(_bytebuf.isEmpty);
-        _bytebuf = encodeUtf8(_strbuf.toString());
+        _bytebuf = UTF8.encode(_strbuf.toString());
         _strbuf.clear();
       }
 
@@ -180,7 +180,7 @@ class FrameParser {
     //use string
     if (!_bytebuf.isEmpty) {
       assert(_strbuf.isEmpty);
-      _strbuf = new StringBuffer(decodeUtf8(_bytebuf));
+      _strbuf = new StringBuffer(UTF8.decode(_bytebuf));
       _bytebuf = [];
     }
 

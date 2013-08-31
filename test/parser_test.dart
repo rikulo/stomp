@@ -5,7 +5,7 @@ library parser_test;
 
 import "dart:async";
 import "dart:io";
-import "dart:utf";
+import "dart:convert" show UTF8;
 import 'package:unittest/unittest.dart';
 import 'package:stomp/impl/util.dart';
 
@@ -48,15 +48,15 @@ foo\\c:escape\\\\
 
   test("simple byte frame", () {
     _testFrame1((FrameParser parser) {
-      parser.addBytes(encodeUtf8(P1 + P2 + P3 + EOF));
+      parser.addBytes(UTF8.encode(P1 + P2 + P3 + EOF));
     });
   });
 
   test("three for one byte frame", () {
     _testFrame1((FrameParser parser) {
-      parser.addBytes(encodeUtf8(P1));
-      parser.addBytes(encodeUtf8(P2));
-      parser.addBytes(encodeUtf8(P3));
+      parser.addBytes(UTF8.encode(P1));
+      parser.addBytes(UTF8.encode(P2));
+      parser.addBytes(UTF8.encode(P3));
       parser.addBytes([0]);
     });
   });
@@ -88,6 +88,6 @@ void _testFrame1(void apply(FrameParser parser), [String content]) {
     expect(frame.bytes.isEmpty, isTrue);
   } else {
     expect(frame.bytes.length, content.length);
-    expect(decodeUtf8(frame.bytes), content);
+    expect(UTF8.decode(frame.bytes), content);
   }
 }
