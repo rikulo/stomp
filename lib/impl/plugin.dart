@@ -5,7 +5,6 @@ library stomp_impl_plugin;
 
 import "dart:async";
 import "dart:convert" show UTF8;
-import "package:meta/meta.dart";
 
 typedef void BytesCallback(List<int> data);
 typedef void StringCallback(String data);

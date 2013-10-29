@@ -5,7 +5,6 @@ library stomp_vm;
 
 import "dart:async";
 import "dart:io";
-import "package:meta/meta.dart";
 
 import "stomp.dart" show StompClient;
 import "impl/plugin_vm.dart" show SocketStompConnector;

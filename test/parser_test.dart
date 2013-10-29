@@ -3,8 +3,6 @@
 // Author: tomyeh
 library parser_test;
 
-import "dart:async";
-import "dart:io";
 import "dart:convert" show UTF8;
 import 'package:unittest/unittest.dart';
 import 'package:stomp/impl/util.dart';

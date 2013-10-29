@@ -5,7 +5,6 @@ library stomp_impl_plugin_vm;
 
 import "dart:async";
 import "dart:io";
-import "package:meta/meta.dart";
 
 import "plugin.dart" show BytesStompConnector;
 

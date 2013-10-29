@@ -7,7 +7,6 @@ import "dart:async";
 import "dart:convert" show JSON;
 import "dart:math" show max;
 import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
-import "package:meta/meta.dart";
 
 import "impl/plugin.dart" show StompConnector;
 import "impl/util.dart";
