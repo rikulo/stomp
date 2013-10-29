@@ -6,3 +6,5 @@ homepage: https://github.com/rikulo/stomp
 documentation: http://api.rikulo.org/stomp/latest
 dependencies:
   unittest: any
+environment:
+  sdk: ">=0.8.7"
