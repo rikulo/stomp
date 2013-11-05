@@ -73,8 +73,8 @@ class _WSStompConnector extends StringStompConnector {
         if (!sdata.isEmpty)
           onString(sdata);
       }
-    }, onError: (error) {
-      onError(error, getAttachedStackTrace(error));
+    }, onError: (error, stackTrace) {
+      onError(error, stackTrace);
     }, onDone: () {
       onClose();
     });

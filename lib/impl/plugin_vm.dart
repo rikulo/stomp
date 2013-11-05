@@ -20,8 +20,8 @@ class SocketStompConnector extends BytesStompConnector {
     _socket.listen((List<int> data) {
       if (data != null && !data.isEmpty)
         onBytes(data);
-    }, onError: (error) {
-      onError(error, getAttachedStackTrace(error));
+    }, onError: (error, stackTrace) {
+      onError(error, stackTrace);
     }, onDone: () {
       onClose();
     });
