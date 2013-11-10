@@ -332,8 +332,12 @@ class _StompClient implements StompClient {
       final String id = headers["subscription"];
       if (id != null) {
         final _Subscriber sub = _subscribers[id];
-        if (sub != null && sub.destination == headers["destination"])
-          sub.onFrame(frame);
+        if (sub != null && sub.destination == headers["destination"]) {
+          sub.onFrame(frame)
+            .catchError((error, stackTrace) {
+              _handleErr(error, stackTrace);
+            });
+        }
       }
     }
   }

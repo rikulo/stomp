@@ -26,8 +26,8 @@ class _Subscriber {
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
       this.ack): type = _SUB_BLOB, this.onMessage = onMessage;
 
-  void onFrame(Frame frame) {
-    new Future(() { //to avoid the callback might cause some effect
+  Future onFrame(Frame frame)
+  => new Future(() { //to avoid the callback might cause some effect
       switch (type) {
         case _SUB_BYTES:
           onMessage(frame.headers, frame.messageBytes);
@@ -44,7 +44,6 @@ class _Subscriber {
           break;
       }
     });
-  }
 }
 
 ///Handles heart-beat sent back from the server.
