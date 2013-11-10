@@ -133,9 +133,17 @@ class FrameParser {
         final int k = line.indexOf(':');
         final String name = k >= 0 ? line.substring(0, k): line,
           value = k >= 0 ? line.substring(k + 1): "";
-        if (_frame.headers == null)
-          _frame.headers = new LinkedHashMap();
-        _frame.headers[_unescape(name)] = _unescape(value);
+        
+        final String unescapedName = _unescape(name);        
+        if (!_frame.headers.containsKey(unescapedName)) {
+          // There can be repeated entries in headers.
+          // Using first one according to spec.
+          // See "Repeated Header Entries".
+          if (_frame.headers == null)
+            _frame.headers = new LinkedHashMap();
+          
+          _frame.headers[unescapedName] = _unescape(value);
+        }
       }
 
       i = string.indexOf('\n', pre);
