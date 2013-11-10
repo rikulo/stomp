@@ -133,7 +133,6 @@ class FrameParser {
         final int k = line.indexOf(':');
         final String name = k >= 0 ? line.substring(0, k): line,
           value = k >= 0 ? line.substring(k + 1): "";
-
         if (_frame.headers == null)
           _frame.headers = new LinkedHashMap();
           
