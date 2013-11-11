@@ -193,8 +193,8 @@ abstract class StringStompConnector extends StompConnector {
       write(null, data);
     }, onDone: () {
       completer.complete();
-    }, onError: (error) {
-      completer.completeError(error);
+    }, onError: (error, stackTrace) {
+      completer.completeError(error, stackTrace);
     });
     return completer.future;
   }
