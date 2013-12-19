@@ -7,6 +7,7 @@ import "dart:async";
 import "dart:convert" show JSON;
 import "dart:math" show max;
 import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
+import "package:quiver/pattern.dart" as qp show matchesFull, Glob;
 
 import "impl/plugin.dart" show StompConnector;
 import "impl/util.dart";
@@ -26,6 +27,14 @@ const Ack CLIENT_INDIVIDUAL = const Ack._("client-individual");
 //headers//
 const String CONTENT_TYPE = "content-type";
 const String CONTENT_LENGTH = "content-length";
+
+///Destination matching mode
+abstract class DestinationType {
+  bool matches(String subscribeDestination, String messageDestination);  
+}
+
+const DestinationType EXACT = const _ExactType();
+const DestinationType GLOB = const _GlobType();
 
 /**
  * A STOMP client.
@@ -134,7 +143,7 @@ abstract class StompClient {
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt});
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
   /** Subscribes for listening a given destination; assuming the message
    * are a String.
    *
@@ -148,7 +157,7 @@ abstract class StompClient {
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt});
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
   /** Subscribes for listening a given destination; assuming the message
    * are a JSON object.
    *
@@ -162,7 +171,7 @@ abstract class StompClient {
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt});
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
   /** Subscribes for listening to a given destination.
    * Like [sendBlob], it is useful if you'd like to receive a huge amount of
    * message (without storing them in memory first).
@@ -181,7 +190,7 @@ abstract class StompClient {
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt});
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
 
   /** Unsubscribes.
    *

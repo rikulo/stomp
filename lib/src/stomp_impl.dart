@@ -7,6 +7,20 @@ typedef void _DisconnectCallback();
 typedef void _ErrorCallback(String message, String detail, [Map<String, String> headers]);
 typedef void _ReceiptCallback(String receipt);
 
+class _ExactType implements DestinationType {
+  const _ExactType();
+  bool matches(String subscribeDestination, String messageDestination) {
+    return subscribeDestination == messageDestination;
+  }
+}
+
+class _GlobType implements DestinationType {
+  const _GlobType();
+  bool matches(String subscribeDestination, String messageDestination) {
+    return new qp.Glob(subscribeDestination).hasMatch(messageDestination);
+  }
+}
+
 class _StompClient implements StompClient {
   final StompConnector _connector;
   FrameParser _parser;
@@ -187,26 +201,26 @@ class _StompClient implements StompClient {
   @override
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt}) {
-    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack), receipt);
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT}) {
+    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack, destinationType), receipt);
   }
   @override
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt}) {
-    _subscribe(new _Subscriber.string(id, destination, onMessage, ack), receipt);
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT}) {
+    _subscribe(new _Subscriber.string(id, destination, onMessage, ack, destinationType), receipt);
   }
   @override
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt}) {
-    _subscribe(new _Subscriber.json(id, destination, onMessage, ack), receipt);
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT}) {
+    _subscribe(new _Subscriber.json(id, destination, onMessage, ack, destinationType), receipt);
   }
   @override
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt}) {
-    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack), receipt);
+      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT}) {
+    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack, destinationType), receipt);
   }
   @override
   void unsubscribe(String id) {
@@ -332,7 +346,7 @@ class _StompClient implements StompClient {
       final String id = headers["subscription"];
       if (id != null) {
         final _Subscriber sub = _subscribers[id];
-        if (sub != null && sub.destination == headers["destination"]) {
+        if (sub != null && sub.destinationMatches(headers["destination"])) {
           sub.onFrame(frame)
             .catchError((error, stackTrace) {
               _handleErr(error, stackTrace);
