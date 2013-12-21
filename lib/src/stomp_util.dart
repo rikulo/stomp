@@ -9,23 +9,26 @@ const int _SUB_BYTES = 0, _SUB_STRING = 1, _SUB_JSON = 2, _SUB_BLOB = 3;
 class _Subscriber {
   final String id;
   final String destination;
+  final DestinationType destinationType;
   final int type;
   final Function onMessage;
   final Ack ack;
 
   _Subscriber.bytes(this.id, this.destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      this.ack): type = _SUB_BYTES, this.onMessage = onMessage;
+      this.ack, this.destinationType): type = _SUB_BYTES, this.onMessage = onMessage;
   _Subscriber.string(this.id, this.destination,
       void onMessage(Map<String, String> headers, String message),
-      this.ack): type = _SUB_STRING, this.onMessage = onMessage;
+      this.ack, this.destinationType): type = _SUB_STRING, this.onMessage = onMessage;
   _Subscriber.json(this.id, this.destination,
       void onMessage(Map<String, String> headers, message),
-      this.ack): type = _SUB_JSON, this.onMessage = onMessage;
+      this.ack, this.destinationType): type = _SUB_JSON, this.onMessage = onMessage;
   _Subscriber.blob(this.id, this.destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      this.ack): type = _SUB_BLOB, this.onMessage = onMessage;
+      this.ack, this.destinationType): type = _SUB_BLOB, this.onMessage = onMessage;
 
+  bool destinationMatches(String destination) => destinationType.matches(this.destination, destination);
+  
   Future onFrame(Frame frame)
   => new Future(() { //to avoid the callback might cause some effect
       switch (type) {
