@@ -28,13 +28,17 @@ const Ack CLIENT_INDIVIDUAL = const Ack._("client-individual");
 const String CONTENT_TYPE = "content-type";
 const String CONTENT_LENGTH = "content-length";
 
-///Destination matching mode
-abstract class DestinationType {
-  bool matches(String subscribeDestination, String messageDestination);  
+///Destination matcher.
+abstract class Matcher {
+  bool matches(String pattern, String destination);  
 }
 
-const DestinationType EXACT = const _ExactType();
-const DestinationType GLOB = const _GlobType();
+///The default matcher for case-sensitive exact match.
+const Matcher EXACT = const _ExactMatcher();
+///The matcher for the glob match.
+const Matcher GLOB = const _GlobMatcher();
+///The matcher for matching regular expression.
+const Matcher REG_EXP = const _RegExpMatcher();
 
 /**
  * A STOMP client.
@@ -140,10 +144,14 @@ abstract class StompClient {
    * * [id] - specifies the id of the subscription. It must be unique
    * for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
+   * * [matcher] - matches [destination] with the message's destination.
+   * If omitted, [EXACT] is assumed.
+   * If you'd like to specify a regular expression in [destination],
+   * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
   /** Subscribes for listening a given destination; assuming the message
    * are a String.
    *
@@ -154,10 +162,14 @@ abstract class StompClient {
    * * [id] - specifies the id of the subscription. It must be unique
    * for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
+   * * [matcher] - matches [destination] with the message's destination.
+   * If omitted, [EXACT] is assumed.
+   * If you'd like to specify a regular expression in [destination],
+   * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
   /** Subscribes for listening a given destination; assuming the message
    * are a JSON object.
    *
@@ -168,10 +180,14 @@ abstract class StompClient {
    * * [id] - specifies the id of the subscription. It must be unique
    * for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
+   * * [matcher] - matches [destination] with the message's destination.
+   * If omitted, [EXACT] is assumed.
+   * If you'd like to specify a regular expression in [destination],
+   * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
   /** Subscribes for listening to a given destination.
    * Like [sendBlob], it is useful if you'd like to receive a huge amount of
    * message (without storing them in memory first).
@@ -187,10 +203,14 @@ abstract class StompClient {
    * * [id] - specifies the id of the subscription, an arbitrary string.
    * It must be unique for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
+   * * [matcher] - matches [destination] with the message's destination.
+   * If omitted, [EXACT] is assumed.
+   * If you'd like to specify a regular expression in [destination],
+   * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt, DestinationType destinationType: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
 
   /** Unsubscribes.
    *
