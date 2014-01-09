@@ -191,9 +191,12 @@ class _StompClient implements StompClient {
 
   //utilities of send//
   static Map<String, String> _headerOfSend(Map<String, String> headers,
-      String destination, [String contentType])
-  => _addContentType(addHeaders(headers, {"destination": destination}),
-        "text/plain");
+      String destination, [String contentType]) {
+    _addContentType(
+        addHeaders(headers, {"destination": destination}),
+        (contentType == null ? "text/plain" : contentType));    
+  }
+
 
   static Map<String, String> _addContentType(
       Map<String, String> headers, String contentType) {
