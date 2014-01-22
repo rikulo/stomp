@@ -1,4 +1,5 @@
 //Copyright (C) 2013 Potix Corporation. All Rights Reserved.
+//Copyright (C) 2013 Potix Corporation. All Rights Reserved.
 //History: Sat, Aug 10, 2013 12:02:54 AM
 // Author: tomyeh
 part of stomp_impl_util;
@@ -8,23 +9,23 @@ part of stomp_impl_util;
  * Depending on [STOMPConnector], one of [bytes] and [string] might be
  * not null.
  */
-class Frame {
-  String command;
-  Map<String, String> headers;
-  String string;
-  List<int> bytes;
-
-  ///Returns the String-typed message of this frame (never null).
+class StompFrame extends Frame {
+  
+  ///Returns the String-typed message of this StompFrame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
+  @override
   String get message =>
     string != null ? string: bytes != null ? UTF8.decode(bytes): "";
-  ///Returns the byte-array message of this frame (never null).
+  
+  ///Returns the byte-array message of this StompFrame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
+  @override
   List<int> get messageBytes =>
      bytes != null ? bytes: string != null ? UTF8.encode(string): [];
 
   ///Retrieve the content length from the header; null means not available
-  int get _contentLength {
+  @override
+  int get contentLength {
     if (headers != null) {
       final String val = headers[CONTENT_LENGTH];
       if (val != null)
@@ -64,7 +65,7 @@ class FrameParser {
   final _OnError _onError;
 
   ///The current frame
-  Frame _frame = new Frame();
+  Frame _frame = new StompFrame();
   ///The body length of the current frame if content-length is received
   int _bodylen;
   ///The state
@@ -125,7 +126,7 @@ class FrameParser {
         }
       } else if (line.isEmpty) {
         _state = _BODY;
-        _bodylen = _frame._contentLength;
+        _bodylen = _frame.contentLength;
         if (i < string.length)
           _addBodyFrag(string.substring(i));
         return;
@@ -218,7 +219,7 @@ class FrameParser {
   }
   void _frameFound() {
     final Frame frame = _frame;
-    _frame = new Frame();
+    _frame = new StompFrame();
     _bodylen = null;
     _state = _COMMAND;
     _onFrame(frame);
@@ -238,7 +239,7 @@ class FrameParser {
     _strbuf.clear();
     if (!_bytebuf.isEmpty)
       _bytebuf = [];
-    _frame = new Frame();
+    _frame = new StompFrame();
     _bodylen = null;
 
     if (_onError != null)

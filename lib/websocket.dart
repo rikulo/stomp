@@ -26,15 +26,25 @@ import "impl/plugin.dart" show StringStompConnector;
  *     }
  *
  * * [url] -- the URL of WebSocket to connect, such as `'ws://127.0.0.1:1337/foo'`.
+ * 
+ * Future<Map> - Map is [ "stompClient": socket, "frame": the first frame response ]
+ * - the first frame response is needed in cases such as Spring 4 with a security token
+ *  coming back as part of the connect message.
  */
-Future<StompClient> connect(String url, {
+Future<Map> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
     void onDisconnect(),
-    void onError(String message, String detail, [Map<String, String> headers])})
-=> _WSStompConnector.start(url).then((_WSStompConnector connector)
-  => StompClient.connect(connector,
-    host: host, login: login, passcode: passcode, heartbeat: heartbeat,
-    onDisconnect: onDisconnect, onError: onError));
+    void onError(String message, String detail, [Map<String, String> headers]),
+    void onConnectionError(event)}) {
+  
+      //Need to set error in here before connection starts else connection errors are swallowed.
+      return _WSStompConnector.start(url, onConnectionError: onConnectionError).then((_WSStompConnector connector)
+        => StompClient.connect(connector,
+            host: host, login: login, passcode: passcode, heartbeat: heartbeat,
+            onDisconnect: onDisconnect, onError: onError)
+      );
+        
+}
 
 ///The implementation
 class _WSStompConnector extends StringStompConnector {
@@ -42,12 +52,17 @@ class _WSStompConnector extends StringStompConnector {
   final StringBuffer _buf = new StringBuffer();
   Completer<_WSStompConnector> _starting = new Completer();
 
-  static Future<_WSStompConnector> start(String url)
-  => new _WSStompConnector(new WebSocket(url))._starting.future;
+  static Future<_WSStompConnector> start(String url, 
+                                         {void onConnectionError(event)}) {
+    WebSocket ws = new WebSocket(url);
+    ws.onError.listen(onConnectionError);
+    return new _WSStompConnector(ws)._starting.future;
+  }
 
   _WSStompConnector(this._socket) {
-    _init();
+    _init();  
   }
+  
   void _init() {
     _socket.onOpen.listen((_) {
       _starting.complete(this);
@@ -57,6 +72,9 @@ class _WSStompConnector extends StringStompConnector {
       if (_starting != null) {
         _starting.completeError(event);
         _starting = null;
+        if (onError != null) {
+          onError("Socket error", "$event");
+        }
       } else if (onError != null) {
         onError("Socket error", "$event");
       } else {
@@ -76,11 +94,13 @@ class _WSStompConnector extends StringStompConnector {
     }, onError: (error, stackTrace) {
       onError(error, stackTrace);
     }, onDone: () {
-      onClose();
+      //if Socket cannot connect there is no onClose
+      if (onClose != null) onClose();
     });
     _socket.onClose.listen((event) {
-      onClose();
-    });
+      if (onClose != null) onClose();
+    }); 
+  
   }
 
   @override

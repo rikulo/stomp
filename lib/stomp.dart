@@ -41,6 +41,27 @@ const Matcher GLOB = const _GlobMatcher();
 const Matcher REG_EXP = const _RegExpMatcher();
 
 /**
+ * A STOMP Frame encapsulating the details of a stomp communication
+ */
+abstract class Frame {
+  String command;
+  Map<String, String> headers;
+  String string;
+  List<int> bytes;
+  
+  ///Returns the String-typed message of this StompFrame (never null).
+  ///It will detect if string or bytes is not null and pick up the right one.
+  String get message;
+  
+  ///Returns the byte-array message of this StompFrame (never null).
+  ///It will detect if string or bytes is not null and pick up the right one.
+  List<int> messageBytes;
+ 
+  ///Retrieve the content length from the header; null means not available
+  int get contentLength;
+}
+
+/**
  * A STOMP client.
  */
 abstract class StompClient {
