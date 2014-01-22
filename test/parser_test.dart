@@ -4,6 +4,7 @@
 library parser_test;
 
 import "dart:convert" show UTF8;
+import "package:stomp/stomp.dart" show Frame;
 import 'package:unittest/unittest.dart';
 import 'package:stomp/impl/util.dart';
 

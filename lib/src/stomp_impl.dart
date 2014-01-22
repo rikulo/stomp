@@ -175,7 +175,7 @@ class _StompClient implements StompClient {
     _checkSend();
     writeDataFrame(_connector, SEND,
       _headerOfSend(headers, destination, "application/json"),
-      JSON.encode(message));
+      JSON.encoder.convert(message));
   }
 
   @override
@@ -336,7 +336,7 @@ class _StompClient implements StompClient {
     if (connecting != null) {
       //FUTURE: check version
       _connecting = null;
-      connecting.complete(this);
+      connecting.complete({ "stompClient": this, "frame": frame });
     }
   }
   void _error(Frame frame) {
