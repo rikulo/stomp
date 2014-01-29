@@ -3,8 +3,9 @@
 // Author: tomyeh
 part of stomp;
 
-typedef void _DisconnectCallback();
-typedef void _ErrorCallback(String message, String detail, [Map<String, String> headers]);
+typedef void _ConnectCallback(StompClient client, Map<String, String> headers);
+typedef void _DisconnectCallback(StompClient client);
+typedef void _ErrorCallback(StompClient client, String message, String detail, [Map<String, String> headers]);
 typedef void _ReceiptCallback(String receipt);
 
 class _ExactMatcher implements Matcher {
@@ -38,6 +39,7 @@ class _StompClient implements StompClient {
   final StompConnector _connector;
   FrameParser _parser;
   String _session, _server;
+  final _ConnectCallback _onConnect;
   final _DisconnectCallback _onDisconnect;
   final _ErrorCallback _onError;
   ///<String subscription-id, _Subscriber>
@@ -63,9 +65,10 @@ class _StompClient implements StompClient {
 
   static Future<StompClient> connect(StompConnector connector,
       String host, String login, String passcode, List<int> heartbeat,
-      void onDisconnect(),
-      void onError(String message, String detail, [Map<String, String> headers])) {
-    _StompClient client = new _StompClient(connector, onDisconnect, onError);
+      void onConnect(StompClient client, Map<String, String> headers),
+      void onDisconnect(StompClient client),
+      void onError(StompClient client, String message, String detail, [Map<String, String> headers])) {
+    _StompClient client = new _StompClient(connector, onConnect, onDisconnect, onError);
     client._connecting = new Completer();
 
     final Map<String, String> headers = new LinkedHashMap();
@@ -88,7 +91,7 @@ class _StompClient implements StompClient {
     return client._connecting.future;
   }
 
-  _StompClient(this._connector, this._onDisconnect, this._onError) {
+  _StompClient(this._connector, this._onConnect, this._onDisconnect, this._onError) {
     _init();
   }
   void _init() {
@@ -117,13 +120,13 @@ class _StompClient implements StompClient {
         _subscribers.clear();
         _receipts.clear();
         if (_onDisconnect != null)
-          _onDisconnect();
+          _onDisconnect(this);
       };
   }
   void _handleErr(error, [stackTrace]) {
     final String message = stackTrace != null ? "$error\n$stackTrace": "$error";
     if (_onError != null) {
-      _onError("$error", message);
+      _onError(this, "$error", message);
     } else {
       print(message);
     }
@@ -336,6 +339,8 @@ class _StompClient implements StompClient {
     if (connecting != null) {
       //FUTURE: check version
       _connecting = null;
+      if (_onConnect != null)
+        _onConnect(this, frame.headers);
       connecting.complete(this);
     }
   }

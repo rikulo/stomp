@@ -29,12 +29,13 @@ import "impl/plugin.dart" show StringStompConnector;
  */
 Future<StompClient> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
-    void onDisconnect(),
-    void onError(String message, String detail, [Map<String, String> headers])})
+    void onConnect(StompClient client, Map<String, String> headers),
+    void onDisconnect(StompClient client),
+    void onError(StompClient client, String message, String detail, [Map<String, String> headers])})
 => _WSStompConnector.start(url).then((_WSStompConnector connector)
   => StompClient.connect(connector,
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
-    onDisconnect: onDisconnect, onError: onError));
+    onConnect: onConnect, onDisconnect: onDisconnect, onError: onError));
 
 ///The implementation
 class _WSStompConnector extends StringStompConnector {

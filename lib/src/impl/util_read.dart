@@ -9,9 +9,13 @@ part of stomp_impl_util;
  * not null.
  */
 class Frame {
+  ///The command.
   String command;
+  ///The header.
   Map<String, String> headers;
+  ///The content if it is string-typed
   String string;
+  ///The content if it is bytes-typed
   List<int> bytes;
 
   ///Returns the String-typed message of this frame (never null).
@@ -24,7 +28,7 @@ class Frame {
      bytes != null ? bytes: string != null ? UTF8.encode(string): [];
 
   ///Retrieve the content length from the header; null means not available
-  int get _contentLength {
+  int get contentLength {
     if (headers != null) {
       final String val = headers[CONTENT_LENGTH];
       if (val != null)
@@ -125,7 +129,7 @@ class FrameParser {
         }
       } else if (line.isEmpty) {
         _state = _BODY;
-        _bodylen = _frame._contentLength;
+        _bodylen = _frame.contentLength;
         if (i < string.length)
           _addBodyFrag(string.substring(i));
         return;

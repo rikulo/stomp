@@ -7,9 +7,9 @@ part of echo_test;
  * so we can test it on both VM and browser.
  */
 Future testEcho(address)
-=> connect(address, onDisconnect: () {
+=> connect(address, onDisconnect: (_) {
   print("Disconnected");
-}).then((StompClient client) {
+}).then((client) {
   test("echo test", () {
     final String destination = "/foo";
     final List<String> sends = ["1. apple", "2. orange\nand 2nd line", "3. mango"];
