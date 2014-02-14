@@ -8,6 +8,11 @@ import "dart:convert" show UTF8;
 
 typedef void BytesCallback(List<int> data);
 typedef void StringCallback(String data);
+/** The error callback.
+ *
+ * * [error] - the error. It could be an exception, or
+ * an event (e.g., received in `WebSocket.onError`)
+ */
 typedef void ErrorCallback(error, stackTrace);
 typedef void CloseCallback();
 

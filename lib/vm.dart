@@ -27,14 +27,18 @@ import "impl/plugin_vm.dart" show SocketStompConnector;
  *
  * * [address] - either be a [String] or an [InternetAddress]. If it is a String,
  * it will perform a[] InternetAddress.lookup] and use the first value in the list.
- * * onConnect - callback when the CONNECT frame is received.
+ * * [onConnect] - callback when the CONNECT frame is received.
+ * * [onError] -- callback when the ERROR frame is received.
+ * * [onFault] -- callback when an exception is received.
  */
 Future<StompClient> connect(address, {int port: 61626,
     String host, String login, String passcode, List<int> heartbeat,
     void onConnect(StompClient client, Map<String, String> headers),
     void onDisconnect(StompClient client),
-    void onError(StompClient client, String message, String detail, [Map<String, String> headers])})
+    void onError(StompClient client, String message, String detail, Map<String, String> headers),
+    void onFault(StompClient client, error, stackTrace)})
 => Socket.connect(address, port).then((Socket socket)
   => StompClient.connect(new SocketStompConnector(socket),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
-    onConnect: onConnect, onDisconnect: onDisconnect, onError: onError));
+    onConnect: onConnect, onDisconnect: onDisconnect,
+    onError: onError, onFault: onFault));

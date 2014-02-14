@@ -69,15 +69,16 @@ abstract class StompClient {
    * running on a browser.
    */
   static Future<StompClient> connect(StompConnector connector, {
-    String host, String login, String passcode, List<int> heartbeat,
-    void onConnect(StompClient client, Map<String, String> headers),
-    void onDisconnect(StompClient client),
-    void onError(StompClient client, String message, String detail, [Map<String, String> headers])}) {
+      String host, String login, String passcode, List<int> heartbeat,
+      void onConnect(StompClient client, Map<String, String> headers),
+      void onDisconnect(StompClient client),
+      void onError(StompClient client, String message, String detail, Map<String, String> headers),
+      void onFault(StompClient client, error, stackTrace)}) {
     if (connector == null)
       throw new ArgumentError("Required: connector. Use stomp_vm's connect() instead.");
 
     return _StompClient.connect(connector, host, login, passcode, heartbeat,
-      onConnect, onDisconnect, onError);
+      onConnect, onDisconnect, onError, onFault);
   }
 
   /** Disconnects. After disconnected, this object can not be used any more.
