@@ -1,6 +1,6 @@
 name: stomp
 author: Tom Yeh <tomyeh@rikulo.org>
-version: 0.7.0
+version: 0.7.1
 homepage: https://github.com/rikulo/stomp
 description: Dart STOMP client for easy messaging interoperability.
 documentation: http://api.rikulo.org/stomp/latest

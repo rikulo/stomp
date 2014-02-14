@@ -113,7 +113,7 @@ abstract class BytesStompConnector extends StompConnector {
     }
   }
   void _flushAsync() { //to accumulate multiple _flush into one, if any
-    new Future(() {_flush();});
+    scheduleMicrotask(() {_flush();});
   }
 
   @override
@@ -127,7 +127,7 @@ abstract class BytesStompConnector extends StompConnector {
   @override
   void writeEof() {
     _write(_EOF);
-    _flushAsync();
+    _flush();
   }
   @override
   void writeLF() {
@@ -181,7 +181,7 @@ abstract class StringStompConnector extends StompConnector {
     }
   }
   void _flushAsync() { //to accumulate multiple _flush into one, if any
-    new Future(() {_flush();});
+    scheduleMicrotask(() {_flush();});
   }
 
   @override
@@ -201,7 +201,7 @@ abstract class StringStompConnector extends StompConnector {
   @override
   void writeEof() {
     _write(_EOF_STRING);
-    _flushAsync();
+    _flush();
   }
   @override
   void writeLF() {
