@@ -27,7 +27,7 @@ import "impl/plugin.dart" show StringStompConnector;
  *
  * * [url] -- the URL of WebSocket to connect, such as `'ws://127.0.0.1:1337/foo'`.
  * * [onError] -- callback when the ERROR frame is received.
- * * [onFault] -- callback when an exception is received.
+ * * [onFault] -- callback when an exception or a WebSocket error event is received.
  */
 Future<StompClient> connect(String url, {
     String host, String login, String passcode, List<int> heartbeat,
@@ -43,7 +43,7 @@ Future<StompClient> connect(String url, {
 /** Connects a STOMP server with the given Web socket.
  *
  * * [onError] -- callback when the ERROR frame is received.
- * * [onFault] -- callback when an exception is received.
+ * * [onFault] -- callback when an exception or a WebSocket error event is received.
  */
 Future<StompClient> connectWith(WebSocket socket, {
     String host, String login, String passcode, List<int> heartbeat,
