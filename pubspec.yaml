@@ -8,4 +8,5 @@ environment:
   sdk: '>=1.0.0'
 dependencies:
   quiver: any
+dev_dependencies:
   unittest: any
