@@ -26,9 +26,6 @@ class _Subscriber {
   _Subscriber.blob(this.id, this.destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
       this.ack, this.matcher): type = _SUB_BLOB, this.onMessage = onMessage;
-
-  bool matches(Map<String, String> headers)
-  => matcher.matches(this.destination, headers["destination"]);
   
   Future onFrame(Frame frame)
   => new Future(() { //to avoid the callback might cause some effect
