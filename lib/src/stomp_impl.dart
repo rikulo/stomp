@@ -36,6 +36,15 @@ class _RegExpMatcher implements Matcher {
   }
 }
 
+class _AllMatcher implements Matcher {
+  const _AllMatcher();
+
+  @override
+  bool matches(String pattern, String destination) {
+    return true;
+  }
+}
+
 class _StompClient implements StompClient {
   final StompConnector _connector;
   FrameParser _parser;

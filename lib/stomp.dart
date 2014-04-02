@@ -39,6 +39,9 @@ const Matcher EXACT = const _ExactMatcher();
 const Matcher GLOB = const _GlobMatcher();
 ///The matcher for matching regular expression.
 const Matcher REG_EXP = const _RegExpMatcher();
+///The matcher that will ignore the destination, i.e., matches all
+///kind of destinations.
+const Matcher ALL = const _AllMatcher();
 
 /**
  * A STOMP client.
@@ -150,6 +153,7 @@ abstract class StompClient {
    * If omitted, [EXACT] is assumed.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
+   * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
@@ -168,6 +172,7 @@ abstract class StompClient {
    * If omitted, [EXACT] is assumed.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
+   * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
@@ -186,6 +191,7 @@ abstract class StompClient {
    * If omitted, [EXACT] is assumed.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
+   * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
@@ -209,6 +215,7 @@ abstract class StompClient {
    * If omitted, [EXACT] is assumed.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
+   * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
