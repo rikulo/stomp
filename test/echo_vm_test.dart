@@ -6,7 +6,7 @@ library echo_test;
 import "dart:async";
 import "dart:io";
 import 'package:unittest/unittest.dart';
-import 'package:stomp/stomp.dart';
+
 import 'package:stomp/vm.dart' show connect;
 
 part "_echo_test.dart";
