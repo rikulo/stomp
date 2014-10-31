@@ -233,26 +233,26 @@ class _StompClient implements StompClient {
   @override
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT}) {
-    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack, matcher), receipt);
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders}) {
+    _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack, matcher), receipt, extraHeaders);
   }
   @override
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT}) {
-    _subscribe(new _Subscriber.string(id, destination, onMessage, ack, matcher), receipt);
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders}) {
+    _subscribe(new _Subscriber.string(id, destination, onMessage, ack, matcher), receipt, extraHeaders);
   }
   @override
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT}) {
-    _subscribe(new _Subscriber.json(id, destination, onMessage, ack, matcher), receipt);
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders}) {
+    _subscribe(new _Subscriber.json(id, destination, onMessage, ack, matcher), receipt, extraHeaders);
   }
   @override
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT}) {
-    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack, matcher), receipt);
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders}) {
+    _subscribe(new _Subscriber.blob(id, destination, onMessage, ack, matcher), receipt, extraHeaders);
   }
   @override
   void unsubscribe(String id) {
@@ -277,7 +277,7 @@ class _StompClient implements StompClient {
     _receipts.remove(receipt);
   }
 
-  void _subscribe(_Subscriber subscriber, String receipt) {
+  void _subscribe(_Subscriber subscriber, String receipt, Map extraHeaders) {
     _checkSend();
 
     final String id = subscriber.id;
@@ -286,7 +286,7 @@ class _StompClient implements StompClient {
 
     _subscribers[id] = subscriber;
 
-    final Map<String, String> headers = {
+    Map<String, String> headers = {
       "id": id,
       "destination": subscriber.destination
     };
@@ -295,6 +295,8 @@ class _StompClient implements StompClient {
       headers["ack"] = ack.id;
     if (receipt != null)
       headers["receipt"] = receipt;
+    if (extraHeaders != null)
+      headers = addHeaders(headers, extraHeaders);
 
     writeSimpleFrame(_connector, SUBSCRIBE, headers);
   }

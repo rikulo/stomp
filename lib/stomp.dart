@@ -151,13 +151,14 @@ abstract class StompClient {
    * * [destination] - specifies the destination to subscribe.
    * * [matcher] - matches [destination] with the message's destination.
    * If omitted, [EXACT] is assumed.
+   * * [extraHeaders] - additional headers to be sent while subscribing.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
   /** Subscribes for listening a given destination; assuming the message
    * are a String.
    *
@@ -170,13 +171,14 @@ abstract class StompClient {
    * * [destination] - specifies the destination to subscribe.
    * * [matcher] - matches [destination] with the message's destination.
    * If omitted, [EXACT] is assumed.
+   * * [extraHeaders] - additional headers to be sent while subscribing.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
   /** Subscribes for listening a given destination; assuming the message
    * are a JSON object.
    *
@@ -189,13 +191,14 @@ abstract class StompClient {
    * * [destination] - specifies the destination to subscribe.
    * * [matcher] - matches [destination] with the message's destination.
    * If omitted, [EXACT] is assumed.
+   * * [extraHeaders] - additional headers to be sent while subscribing.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
    * If you'd like to ignore the destination, use [ALL].
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
   /** Subscribes for listening to a given destination.
    * Like [sendBlob], it is useful if you'd like to receive a huge amount of
    * message (without storing them in memory first).
@@ -212,6 +215,7 @@ abstract class StompClient {
    * It must be unique for each [StompClient] (until [unsubscribe] is called).
    * * [destination] - specifies the destination to subscribe.
    * * [matcher] - matches [destination] with the message's destination.
+   * * [extraHeaders] - additional headers to be sent while subscribing.
    * If omitted, [EXACT] is assumed.
    * If you'd like to specify a regular expression in [destination],
    * you can use [REG_EXP]. For GLOB pattern, use [GLOB].
@@ -219,7 +223,7 @@ abstract class StompClient {
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT});
+      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
 
   /** Unsubscribes.
    *
