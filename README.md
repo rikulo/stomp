@@ -3,7 +3,7 @@
 [STOMP](http://stomp.github.io/) Dart client for communicating with STOMP complaint messaging brokers and servers.
 
 * [Home](http://rikulo.org)
-* [API Reference](http://api.rikulo.org/stomp/latest)
+* [API Reference](http://www.dartdocs.org/documentation/stomp/0.7.3)
 * [Discussion](http://stackoverflow.com/questions/tagged/rikulo)
 * [Git Repository](https://github.com/rikulo/stomp)
 * [Issues](https://github.com/rikulo/stomp/issues)
