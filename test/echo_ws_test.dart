@@ -5,7 +5,7 @@ library echo_test;
 
 import "dart:html";
 import "dart:async";
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 import 'package:stomp/webSocket.dart' show connect;
 

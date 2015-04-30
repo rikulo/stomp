@@ -9,4 +9,4 @@ environment:
 dependencies:
   quiver: any
 dev_dependencies:
-  unittest: any
+  test: any

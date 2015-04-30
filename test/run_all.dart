@@ -3,7 +3,7 @@
 // Author: tomyeh
 library test_run_all;
 
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 import 'parser_test.dart' as parser_test;
 
