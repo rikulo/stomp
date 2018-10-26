@@ -5,7 +5,7 @@ homepage: https://github.com/rikulo/stomp
 description: Dart STOMP client for easy messaging interoperability.
 documentation: http://api.rikulo.org/stomp/latest
 environment:
-  sdk: '>=1.0.0'
+  sdk: '>=2.0.0'
 dependencies:
   quiver: any
 dev_dependencies:

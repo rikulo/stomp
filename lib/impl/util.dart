@@ -4,11 +4,11 @@
 library stomp_impl_util;
 
 import "dart:async";
-import "dart:convert" show UTF8;
+import "dart:convert" show utf8;
 import "dart:collection" show LinkedHashMap;
 import "plugin.dart" show StompConnector;
 
-import "../stomp.dart" show CONTENT_LENGTH, CONTENT_TYPE;
+import "../stomp.dart" show CONTENT_LENGTH;
 
 part "../src/impl/util_read.dart";
 part "../src/impl/util_write.dart";

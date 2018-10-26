@@ -11,21 +11,25 @@ part of stomp_impl_util;
 class Frame {
   ///The command.
   String command;
+
   ///The header.
   Map<String, String> headers;
+
   ///The content if it is string-typed
   String string;
+
   ///The content if it is bytes-typed
   List<int> bytes;
 
   ///Returns the String-typed message of this frame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
   String get message =>
-    string != null ? string: bytes != null ? UTF8.decode(bytes): "";
+      string != null ? string : bytes != null ? utf8.decode(bytes) : "";
+
   ///Returns the byte-array message of this frame (never null).
   ///It will detect if string or bytes is not null and pick up the right one.
   List<int> get messageBytes =>
-     bytes != null ? bytes: string != null ? UTF8.encode(string): [];
+      bytes != null ? bytes : string != null ? utf8.encode(string) : [];
 
   ///Retrieve the content length from the header; null means not available
   int get contentLength {
@@ -34,8 +38,7 @@ class Frame {
       if (val != null)
         try {
           return int.parse(val);
-        } catch (ex) {
-        }
+        } catch (ex) {}
     }
     return null;
   }
@@ -48,8 +51,10 @@ const String _EOF = '\x00';
 
 ///State of expecting command
 const int _COMMAND = 0;
+
 ///State of expecting header
 const int _HEADER = 1;
+
 ///State of expecting body
 const int _BODY = 2;
 
@@ -69,16 +74,19 @@ class FrameParser {
 
   ///The current frame
   Frame _frame = new Frame();
+
   ///The body length of the current frame if content-length is received
   int _bodylen;
+
   ///The state
   int _state = _COMMAND;
 
   List<int> _bytebuf = [];
   StringBuffer _strbuf = new StringBuffer();
 
-  FrameParser(void onFrame(Frame frame), [void onError(error, stackTrace)]):
-    _onFrame = onFrame, _onError = onError;
+  FrameParser(void onFrame(Frame frame), [void onError(error, stackTrace)])
+      : _onFrame = onFrame,
+        _onError = onError;
 
   ///Adds an array of bytes (when the caller receives it)
   void addBytes(List<int> bytes) {
@@ -87,16 +95,17 @@ class FrameParser {
         if (_state == _BODY)
           _addBodyFrag(null, bytes);
         else
-          _addHeaderFrag(UTF8.decode(bytes));
+          _addHeaderFrag(utf8.decode(bytes));
       } catch (ex, st) {
         _errorFound(ex, st);
       }
   }
+
   ///Adds a [String] (when the caller receives it)
   void addString(String string) {
     if (string != null)
       try {
-        if(_state == _BODY)
+        if (_state == _BODY)
           _addBodyFrag(string);
         else
           _addHeaderFrag(string);
@@ -104,6 +113,7 @@ class FrameParser {
         _errorFound(ex, st);
       }
   }
+
   void _addHeaderFrag(String string) {
     int i = string.indexOf('\n');
     if (i < 0) {
@@ -117,30 +127,30 @@ class FrameParser {
       _strbuf.clear();
     }
 
-    for (int pre = 0;;) { //for each line
-      final int end = i > pre && string[i - 1] == '\r' ? i - 1: i;
+    for (int pre = 0;;) {
+      //for each line
+      final int end = i > pre && string[i - 1] == '\r' ? i - 1 : i;
       final String line = string.substring(pre, end);
       pre = ++i;
 
       if (_state == _COMMAND) {
-        if (!line.isEmpty) { //skip heartbeat
+        if (!line.isEmpty) {
+          //skip heartbeat
           _frame.command = line;
           _state = _HEADER;
         }
       } else if (line.isEmpty) {
         _state = _BODY;
         _bodylen = _frame.contentLength;
-        if (i < string.length)
-          _addBodyFrag(string.substring(i));
+        if (i < string.length) _addBodyFrag(string.substring(i));
         return;
       } else {
         final int k = line.indexOf(':');
-        final String name = k >= 0 ? line.substring(0, k): line,
-          value = k >= 0 ? line.substring(k + 1): "";
-        if (_frame.headers == null)
-          _frame.headers = new LinkedHashMap();
-          
-        final String unescapedName = _unescape(name);        
+        final String name = k >= 0 ? line.substring(0, k) : line,
+            value = k >= 0 ? line.substring(k + 1) : "";
+        if (_frame.headers == null) _frame.headers = new LinkedHashMap();
+
+        final String unescapedName = _unescape(name);
         if (!_frame.headers.containsKey(unescapedName)) {
           // There can be repeated entries in headers.
           // Using first one according to spec.
@@ -151,22 +161,22 @@ class FrameParser {
 
       i = string.indexOf('\n', pre);
       if (i < 0) {
-        if (pre < string.length)
-          _strbuf.write(string.substring(pre));
+        if (pre < string.length) _strbuf.write(string.substring(pre));
         return; //no more
       }
     }
   }
+
   //one of [string] and [bytes] must be non-null
   void _addBodyFrag(String string, [List<int> bytes]) {
     //handle in bytes if _bodylen is specified
-    if (_bodylen != null && bytes == null)
-      bytes = UTF8.encode(string);
+    if (_bodylen != null && bytes == null) bytes = utf8.encode(string);
 
-    if (bytes != null) { //use bytes
+    if (bytes != null) {
+      //use bytes
       if (!_strbuf.isEmpty) {
         assert(_bytebuf.isEmpty);
-        _bytebuf = UTF8.encode(_strbuf.toString());
+        _bytebuf = utf8.encode(_strbuf.toString());
         _strbuf.clear();
       }
 
@@ -176,32 +186,33 @@ class FrameParser {
           _frameBytes(bytes, _bodylen - _bytebuf.length);
           return;
         }
-      } else { //scan 0
+      } else {
+        //scan 0
         for (int i = 0, len = bytes.length; i < len; ++i)
-          if (bytes[i] == 0) { //EOF
+          if (bytes[i] == 0) {
+            //EOF
             _frameBytes(bytes, i);
             return;
           }
       }
       _bytebuf.addAll(bytes);
-        //Note: make copy since bytes might be reused by caller
+      //Note: make copy since bytes might be reused by caller
       return;
     }
 
     //use string
     if (!_bytebuf.isEmpty) {
       assert(_strbuf.isEmpty);
-      _strbuf = new StringBuffer(UTF8.decode(_bytebuf));
+      _strbuf = new StringBuffer(utf8.decode(_bytebuf));
       _bytebuf = [];
     }
 
     for (int i = 0, len = string.length; i < len; ++i)
       if (string[i] == _EOF) {
         final String s = string.substring(0, i);
-        _frame.string = _strbuf.isEmpty ? s: _strbuf.toString() + s;
+        _frame.string = _strbuf.isEmpty ? s : _strbuf.toString() + s;
         _strbuf.clear();
-        if (++i < len)
-          _strbuf.write(string.substring(i));
+        if (++i < len) _strbuf.write(string.substring(i));
 
         _frameFound();
         return;
@@ -209,6 +220,7 @@ class FrameParser {
 
     _strbuf.write(string);
   }
+
   void _frameBytes(List<int> bytes, int len) {
     final List<int> curr = bytes.sublist(0, len);
     if (_bytebuf.isEmpty)
@@ -217,9 +229,10 @@ class FrameParser {
       (_frame.bytes = _bytebuf).addAll(curr);
     if (bytes[len] == 0) //EOF
       ++len;
-    _bytebuf = len < bytes.length ? bytes.sublist(len): [];
+    _bytebuf = len < bytes.length ? bytes.sublist(len) : [];
     _frameFound();
   }
+
   void _frameFound() {
     final Frame frame = _frame;
     _frame = new Frame();
@@ -238,10 +251,10 @@ class FrameParser {
       addString(string);
     }
   }
+
   void _errorFound(error, stackTrace) {
     _strbuf.clear();
-    if (!_bytebuf.isEmpty)
-      _bytebuf = [];
+    if (!_bytebuf.isEmpty) _bytebuf = [];
     _frame = new Frame();
     _bodylen = null;
 
@@ -261,15 +274,22 @@ String _unescape(String value) {
       if (j < len) {
         String esc;
         switch (value[j]) {
-          case 'r': esc = '\r'; break;
-          case 'n': esc = '\n'; break;
-          case 'c': esc = ':'; break;
-          case '\\': esc = '\\'; break;
+          case 'r':
+            esc = '\r';
+            break;
+          case 'n':
+            esc = '\n';
+            break;
+          case 'c':
+            esc = ':';
+            break;
+          case '\\':
+            esc = '\\';
+            break;
         }
 
         if (esc != null) {
-          if (buf == null)
-            buf = new StringBuffer();
+          if (buf == null) buf = new StringBuffer();
           buf..write(value.substring(pre, i))..write(esc);
           i = j;
           pre = j + 1;
@@ -277,5 +297,5 @@ String _unescape(String value) {
       }
     }
   }
-  return buf != null ? (buf..write(value.substring(pre))).toString(): value;
+  return buf != null ? (buf..write(value.substring(pre))).toString() : value;
 }
