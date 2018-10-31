@@ -4,7 +4,7 @@
 library stomp_websocket;
 
 import "dart:async";
-import "dart:html" show WebSocket, MessageEvent, ByteBuffer;
+import "dart:html" show WebSocket, MessageEvent;
 
 import "stomp.dart" show StompClient;
 import "impl/plugin.dart" show StringStompConnector;
@@ -14,13 +14,13 @@ import "impl/plugin.dart" show StringStompConnector;
  *
  *     import "package:stomp/stomp.dart";
  *     import "package:stomp/websocket.dart" show connect;
- * 
+ *
  *     void main() {
  *       connect("foo.server.com").then((StompClient stomp) {
  *         stomp.subscribeString("/foo", (String message) {
  *           print("Recieve $message");
  *         });
- * 
+ *
  *         stomp.sendString("/foo", "Hi, Stomp");
  *       });
  *     }
@@ -29,42 +29,59 @@ import "impl/plugin.dart" show StringStompConnector;
  * * [onError] -- callback when the ERROR frame is received.
  * * [onFault] -- callback when an exception or a WebSocket error event is received.
  */
-Future<StompClient> connect(String url, {
-    String host, String login, String passcode, List<int> heartbeat,
-    void onConnect(StompClient client, Map<String, String> headers),
-    void onDisconnect(StompClient client),
-    void onError(StompClient client, String message, String detail, Map<String, String> headers),
-    void onFault(StompClient client, error, stackTrace)})
-=> connectWith(new WebSocket(url),
-    host: host, login: login, passcode: passcode, heartbeat: heartbeat,
-    onConnect: onConnect, onDisconnect: onDisconnect,
-    onError: onError, onFault: onFault);
+Future<StompClient> connect(String url,
+        {String host,
+        String login,
+        String passcode,
+        List<int> heartbeat,
+        void onConnect(StompClient client, Map<String, String> headers),
+        void onDisconnect(StompClient client),
+        void onError(StompClient client, String message, String detail,
+            Map<String, String> headers),
+        void onFault(StompClient client, error, stackTrace)}) =>
+    connectWith(new WebSocket(url),
+        host: host,
+        login: login,
+        passcode: passcode,
+        heartbeat: heartbeat,
+        onConnect: onConnect,
+        onDisconnect: onDisconnect,
+        onError: onError,
+        onFault: onFault);
 
 /** Connects a STOMP server with the given Web socket.
  *
  * * [onError] -- callback when the ERROR frame is received.
  * * [onFault] -- callback when an exception or a WebSocket error event is received.
  */
-Future<StompClient> connectWith(WebSocket socket, {
-    String host, String login, String passcode, List<int> heartbeat,
-    void onConnect(StompClient client, Map<String, String> headers),
-    void onDisconnect(StompClient client),
-    void onError(StompClient client, String message, String detail, Map<String, String> headers),
-    void onFault(StompClient client, error, stackTrace)})
-=> _WSStompConnector.startWith(socket).then((_WSStompConnector connector)
-  => StompClient.connect(connector,
-    host: host, login: login, passcode: passcode, heartbeat: heartbeat,
-    onConnect: onConnect, onDisconnect: onDisconnect,
-    onError: onError, onFault: onFault));
+Future<StompClient> connectWith(WebSocket socket,
+        {String host,
+        String login,
+        String passcode,
+        List<int> heartbeat,
+        void onConnect(StompClient client, Map<String, String> headers),
+        void onDisconnect(StompClient client),
+        void onError(StompClient client, String message, String detail,
+            Map<String, String> headers),
+        void onFault(StompClient client, error, stackTrace)}) =>
+    _WSStompConnector.startWith(socket).then((_WSStompConnector connector) =>
+        StompClient.connect(connector,
+            host: host,
+            login: login,
+            passcode: passcode,
+            heartbeat: heartbeat,
+            onConnect: onConnect,
+            onDisconnect: onDisconnect,
+            onError: onError,
+            onFault: onFault));
 
 ///The implementation
 class _WSStompConnector extends StringStompConnector {
   final WebSocket _socket;
-  final StringBuffer _buf = new StringBuffer();
   Completer<_WSStompConnector> _starting = new Completer();
 
-  static Future<_WSStompConnector> startWith(WebSocket socket)
-  => new _WSStompConnector(socket)._starting.future;
+  static Future<_WSStompConnector> startWith(WebSocket socket) =>
+      new _WSStompConnector(socket)._starting.future;
 
   _WSStompConnector(this._socket) {
     _init();
@@ -91,8 +108,7 @@ class _WSStompConnector extends StringStompConnector {
       if (data != null) {
         //TODO: handle Blob and TypedData more effectively
         final String sdata = data.toString();
-        if (!sdata.isEmpty)
-          onString(sdata);
+        if (!sdata.isEmpty) onString(sdata);
       }
     }, onError: (error, stackTrace) {
       onError(error, stackTrace);
@@ -108,12 +124,10 @@ class _WSStompConnector extends StringStompConnector {
   void writeString_(String string) {
     _socket.send(string);
   }
+
   @override
   Future close() {
     _socket.close();
     return new Future.value();
   }
 }
-
-const String _EOF = '\x00';
-const int _MAX_FRAME_SIZE = 16 * 1024;

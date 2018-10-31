@@ -4,10 +4,10 @@
 library stomp;
 
 import "dart:async";
-import "dart:convert" show JSON;
+import "dart:convert";
 import "dart:math" show max;
-import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
-import "package:quiver/pattern.dart" as qp show matchesFull, Glob;
+import "dart:collection" show HashMap, LinkedHashMap;
+import "package:quiver/pattern.dart" as qp show Glob;
 
 import "impl/plugin.dart" show StompConnector;
 import "impl/util.dart";
@@ -20,6 +20,7 @@ class Ack {
   final String id;
   const Ack._(this.id);
 }
+
 const Ack AUTO = const Ack._("auto");
 const Ack CLIENT = const Ack._("client");
 const Ack CLIENT_INDIVIDUAL = const Ack._("client-individual");
@@ -30,15 +31,18 @@ const String CONTENT_LENGTH = "content-length";
 
 ///Destination matcher.
 abstract class Matcher {
-  bool matches(String pattern, String destination);  
+  bool matches(String pattern, String destination);
 }
 
 ///The default matcher for case-sensitive exact match.
 const Matcher EXACT = const _ExactMatcher();
+
 ///The matcher for the glob match.
 const Matcher GLOB = const _GlobMatcher();
+
 ///The matcher for matching regular expression.
 const Matcher REG_EXP = const _RegExpMatcher();
+
 ///The matcher that will ignore the destination, i.e., matches all
 ///kind of destinations.
 const Matcher ALL = const _AllMatcher();
@@ -51,6 +55,7 @@ abstract class StompClient {
    * It is null if the server doesn't support it.
    */
   String get session;
+
   ///The information about the STOMP server, such as `ripple/1.0.0`.
   String get server;
   /** The heart beat. A two-element array. The first element is
@@ -59,6 +64,7 @@ abstract class StompClient {
    * server would like to get.
    */
   List<int> get heartbeat;
+
   ///Whether it is disconnected from the server.
   bool get isDisconnected;
 
@@ -71,17 +77,22 @@ abstract class StompClient {
    * Or, invoke [WebSocket's connect](../stomp_websocket.html#connect) if
    * running on a browser.
    */
-  static Future<StompClient> connect(StompConnector connector, {
-      String host, String login, String passcode, List<int> heartbeat,
+  static Future<StompClient> connect(StompConnector connector,
+      {String host,
+      String login,
+      String passcode,
+      List<int> heartbeat,
       void onConnect(StompClient client, Map<String, String> headers),
       void onDisconnect(StompClient client),
-      void onError(StompClient client, String message, String detail, Map<String, String> headers),
+      void onError(StompClient client, String message, String detail,
+          Map<String, String> headers),
       void onFault(StompClient client, error, stackTrace)}) {
     if (connector == null)
-      throw new ArgumentError("Required: connector. Use stomp_vm's connect() instead.");
+      throw new ArgumentError(
+          "Required: connector. Use stomp_vm's connect() instead.");
 
     return _StompClient.connect(connector, host, login, passcode, heartbeat,
-      onConnect, onDisconnect, onError, onFault);
+        onConnect, onDisconnect, onError, onFault);
   }
 
   /** Disconnects. After disconnected, this object can not be used any more.
@@ -118,8 +129,7 @@ abstract class StompClient {
    * * [message] - the message. It must be a JSON object (including null).
    * In other words, it must be able to *jsonized* into a JSON string.
    */
-  void sendJson(String destination, message,
-      {Map<String, String> headers});
+  void sendJson(String destination, message, {Map<String, String> headers});
   /** Sends a message read from a given [Stream].
    * It saves the memory use since the message is *piping* from [Stream]
    * to the network directly.
@@ -158,7 +168,10 @@ abstract class StompClient {
    */
   void subscribeBytes(String id, String destination,
       void onMessage(Map<String, String> headers, List<int> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
+      {Ack ack: AUTO,
+      String receipt,
+      Matcher matcher: EXACT,
+      Map extraHeaders});
   /** Subscribes for listening a given destination; assuming the message
    * are a String.
    *
@@ -178,7 +191,10 @@ abstract class StompClient {
    */
   void subscribeString(String id, String destination,
       void onMessage(Map<String, String> headers, String message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
+      {Ack ack: AUTO,
+      String receipt,
+      Matcher matcher: EXACT,
+      Map extraHeaders});
   /** Subscribes for listening a given destination; assuming the message
    * are a JSON object.
    *
@@ -198,7 +214,10 @@ abstract class StompClient {
    */
   void subscribeJson(String id, String destination,
       void onMessage(Map<String, String> headers, message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
+      {Ack ack: AUTO,
+      String receipt,
+      Matcher matcher: EXACT,
+      Map extraHeaders});
   /** Subscribes for listening to a given destination.
    * Like [sendBlob], it is useful if you'd like to receive a huge amount of
    * message (without storing them in memory first).
@@ -223,7 +242,10 @@ abstract class StompClient {
    */
   void subscribeBlob(String id, String destination,
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
-      {Ack ack: AUTO, String receipt, Matcher matcher: EXACT, Map extraHeaders});
+      {Ack ack: AUTO,
+      String receipt,
+      Matcher matcher: EXACT,
+      Map extraHeaders});
 
   /** Unsubscribes.
    *

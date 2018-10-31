@@ -4,7 +4,7 @@
 library stomp_impl_plugin;
 
 import "dart:async";
-import "dart:convert" show UTF8;
+import "dart:convert" show utf8;
 
 typedef void BytesCallback(List<int> data);
 typedef void StringCallback(String data);
@@ -35,10 +35,13 @@ abstract class StompConnector {
    * Otherwise, this method shall pick the non-null one.
    */
   void write(String string, [List<int> bytes]);
+
   ///Write a stream
   Future writeStream(Stream<List<int>> stream);
+
   ///Write the NULL octet to indicate the end of a frame.
   void writeEof();
+
   ///Write the end of line (LF)
   void writeLF();
 
@@ -98,7 +101,8 @@ abstract class BytesStompConnector extends StompConnector {
 
   void _write(List<int> bytes) {
     final int len = bytes.length;
-    if (len >= _MIN_FRAME_SIZE || _buflen + len >= _BUFFER_SIZE) { //_buf will be full
+    if (len >= _MIN_FRAME_SIZE || _buflen + len >= _BUFFER_SIZE) {
+      //_buf will be full
       _flush();
 
       if (len >= _MIN_FRAME_SIZE) {
@@ -107,9 +111,9 @@ abstract class BytesStompConnector extends StompConnector {
       }
     }
 
-    for (int i = 0; i < len; ++i)
-      _buf[_buflen++] = bytes[i];
+    for (int i = 0; i < len; ++i) _buf[_buflen++] = bytes[i];
   }
+
   void _flush() {
     if (_buflen > 0) {
       final int len = _buflen;
@@ -117,23 +121,29 @@ abstract class BytesStompConnector extends StompConnector {
       writeBytes_(_buf.sublist(0, len));
     }
   }
-  void _flushAsync() { //to accumulate multiple _flush into one, if any
-    scheduleMicrotask(() {_flush();});
+
+  void _flushAsync() {
+    //to accumulate multiple _flush into one, if any
+    scheduleMicrotask(() {
+      _flush();
+    });
   }
 
   @override
   void write(String string, [List<int> bytes]) {
     if (bytes != null) {
-       _write(bytes);
+      _write(bytes);
     } else if (string != null && !string.isEmpty) {
-      _write(UTF8.encode(string));
+      _write(utf8.encode(string));
     }
   }
+
   @override
   void writeEof() {
     _write(_EOF);
     _flush();
   }
+
   @override
   void writeLF() {
     _write(_LF);
@@ -157,12 +167,14 @@ abstract class StringStompConnector extends StompConnector {
     if (string != null) {
       _write(string);
     } else if (bytes != null && !bytes.isEmpty) {
-      _write(UTF8.decode(bytes));
+      _write(utf8.decode(bytes));
     }
   }
+
   void _write(String data) {
     final int len = data.length;
-    if (_buf.length + len >= _BUFFER_SIZE) { //_buf will be full
+    if (_buf.length + len >= _BUFFER_SIZE) {
+      //_buf will be full
       _flush();
 
       for (int i = 0;;) {
@@ -174,10 +186,10 @@ abstract class StringStompConnector extends StompConnector {
         writeString_(data.substring(i, j));
         i = j;
       }
-
     }
     _buf.write(data);
   }
+
   void _flush() {
     if (!_buf.isEmpty) {
       final String str = _buf.toString();
@@ -185,8 +197,12 @@ abstract class StringStompConnector extends StompConnector {
       writeString_(str);
     }
   }
-  void _flushAsync() { //to accumulate multiple _flush into one, if any
-    scheduleMicrotask(() {_flush();});
+
+  void _flushAsync() {
+    //to accumulate multiple _flush into one, if any
+    scheduleMicrotask(() {
+      _flush();
+    });
   }
 
   @override
@@ -203,11 +219,13 @@ abstract class StringStompConnector extends StompConnector {
     });
     return completer.future;
   }
+
   @override
   void writeEof() {
     _write(_EOF_STRING);
     _flush();
   }
+
   @override
   void writeLF() {
     _write("\n");
