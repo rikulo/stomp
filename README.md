@@ -1,9 +1,9 @@
-#STOMP Dart Client
+# STOMP Dart Client
 
 [STOMP](http://stomp.github.io/) Dart client for communicating with STOMP complaint messaging brokers and servers.
 
 * [Home](http://rikulo.org)
-* [API Reference](http://www.dartdocs.org/documentation/stomp/0.7.3)
+* [API Reference](http://www.dartdocs.org/documentation/stomp/0.8.0)
 * [Discussion](http://stackoverflow.com/questions/tagged/rikulo)
 * [Git Repository](https://github.com/rikulo/stomp)
 * [Issues](https://github.com/rikulo/stomp/issues)
@@ -14,7 +14,7 @@ Stomp Dart Client is distributed under an Apache 2.0 License.
 
 > See also [Ripple - Lightweight Dart Messaging Server](https://github.com/rikulo/ripple).
 
-##Installation
+## Installation
 
 Add this to your `pubspec.yaml` (or create it):
 
@@ -25,9 +25,9 @@ Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the 
 
     pub install
 
-##Usage
+## Usage
 
-###Running on Dart VM
+### Running on Dart VM
 
     import "package:stomp/stomp.dart";
     import "package:stomp/vm.dart" show connect;
@@ -52,7 +52,7 @@ There are basically a few alternative ways to communicate:
 
 > Please refer to [StompClient](http://api.rikulo.org/stomp/latest/stomp/StompClient.html) for more information.
 
-###Running on Browser
+### Running on Browser
 
 The same as the above, except import `websocket.dart` instead of `vm.dart`:
 
@@ -61,11 +61,11 @@ The same as the above, except import `websocket.dart` instead of `vm.dart`:
 
     //the rest is the same as running on Dart VM
 
-##Limitations
+## Limitations
 
 * Support STOMP 1.2 or above
 * Support UTF-8 encoding
 
-##Incompleteness
+## Incompleteness
 
 * Heart beat not supported.

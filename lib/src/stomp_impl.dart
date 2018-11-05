@@ -246,7 +246,7 @@ class _StompClient implements StompClient {
       void onMessage(Map<String, String> headers, List<int> message),
       {Ack ack: AUTO,
       String receipt,
-      Matcher matcher: EXACT,
+      Matcher matcher: exact,
       Map extraHeaders}) {
     _subscribe(new _Subscriber.bytes(id, destination, onMessage, ack, matcher),
         receipt, extraHeaders);
@@ -257,7 +257,7 @@ class _StompClient implements StompClient {
       void onMessage(Map<String, String> headers, String message),
       {Ack ack: AUTO,
       String receipt,
-      Matcher matcher: EXACT,
+      Matcher matcher: exact,
       Map extraHeaders}) {
     _subscribe(new _Subscriber.string(id, destination, onMessage, ack, matcher),
         receipt, extraHeaders);
@@ -268,7 +268,7 @@ class _StompClient implements StompClient {
       void onMessage(Map<String, String> headers, message),
       {Ack ack: AUTO,
       String receipt,
-      Matcher matcher: EXACT,
+      Matcher matcher: exact,
       Map extraHeaders}) {
     _subscribe(new _Subscriber.json(id, destination, onMessage, ack, matcher),
         receipt, extraHeaders);
@@ -279,7 +279,7 @@ class _StompClient implements StompClient {
       void onMessage(Map<String, String> headers, Stream<List<int>> message),
       {Ack ack: AUTO,
       String receipt,
-      Matcher matcher: EXACT,
+      Matcher matcher: exact,
       Map extraHeaders}) {
     _subscribe(new _Subscriber.blob(id, destination, onMessage, ack, matcher),
         receipt, extraHeaders);
