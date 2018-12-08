@@ -82,6 +82,7 @@ abstract class StompClient {
       String login,
       String passcode,
       List<int> heartbeat,
+      Map<String, String> extraHeaders,
       void onConnect(StompClient client, Map<String, String> headers),
       void onDisconnect(StompClient client),
       void onError(StompClient client, String message, String detail,
@@ -91,7 +92,7 @@ abstract class StompClient {
       throw new ArgumentError(
           "Required: connector. Use stomp_vm's connect() instead.");
 
-    return _StompClient.connect(connector, host, login, passcode, heartbeat,
+    return _StompClient.connect(connector, host, login, passcode, heartbeat, extraHeaders,
         onConnect, onDisconnect, onError, onFault);
   }
 

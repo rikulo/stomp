@@ -84,6 +84,7 @@ class _StompClient implements StompClient {
       String login,
       String passcode,
       List<int> heartbeat,
+      Map<String, String> extraHeaders,
       void onConnect(StompClient client, Map<String, String> headers),
       void onDisconnect(StompClient client),
       void onError(StompClient client, String message, String detail,
@@ -105,6 +106,7 @@ class _StompClient implements StompClient {
     } else {
       client.heartbeat[0] = client.heartbeat[1] = 0;
     }
+    if (extraHeaders != null) headers.addAll(extraHeaders);
     writeSimpleFrame(connector, STOMP, headers);
 
     return client._connecting.future;
