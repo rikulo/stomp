@@ -107,8 +107,6 @@ class _StompClient implements StompClient {
       client.heartbeat[0] = client.heartbeat[1] = 0;
     }
     if(customHeaders != null) headers.addAll(customHeaders);
-    print("headers");
-    print(headers);
     writeSimpleFrame(connector, STOMP, headers);
 
     return client._connecting.future;
