@@ -31,13 +31,14 @@ import "impl/plugin_vm.dart" show SocketStompConnector;
  * * [onFault] -- callback when an exception is received.
  */
 Future<StompClient> connect(address, {int port: 61626,
-    String host, String login, String passcode, List<int> heartbeat,
+    String host,Map<String, String> customHeaders, String login, String passcode, List<int> heartbeat,
     void onConnect(StompClient client, Map<String, String> headers),
     void onDisconnect(StompClient client),
     void onError(StompClient client, String message, String detail, Map<String, String> headers),
     void onFault(StompClient client, error, stackTrace)})
 async => connectWith(await IOWebSocketChannel.connect(address),
  host: host,
+ customHeaders: customHeaders,
         login: login,
         passcode: passcode,
         heartbeat: heartbeat,
@@ -48,6 +49,7 @@ async => connectWith(await IOWebSocketChannel.connect(address),
 
 Future<StompClient> connectWith(IOWebSocketChannel channel,
         {String host,
+        Map<String, String> customHeaders,
         String login,
         String passcode,
         List<int> heartbeat,
@@ -57,6 +59,6 @@ Future<StompClient> connectWith(IOWebSocketChannel channel,
             Map<String, String> headers),
         void onFault(StompClient client, error, stackTrace)})=>
      StompClient.connect(new SocketStompConnector(channel),
-      host: host, login: login, passcode: passcode, heartbeat: heartbeat,
+      host: host,customHeaders: customHeaders, login: login, passcode: passcode, heartbeat: heartbeat,
       onConnect: onConnect, onDisconnect: onDisconnect,
       onError: onError, onFault: onFault);

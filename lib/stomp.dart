@@ -79,6 +79,7 @@ abstract class StompClient {
    */
   static Future<StompClient> connect(StompConnector connector,
       {String host,
+      Map<String,String> customHeaders,
       String login,
       String passcode,
       List<int> heartbeat,
@@ -91,7 +92,7 @@ abstract class StompClient {
       throw new ArgumentError(
           "Required: connector. Use stomp_vm's connect() instead.");
 
-    return _StompClient.connect(connector, host, login, passcode, heartbeat,
+    return _StompClient.connect(connector, host, customHeaders,login, passcode, heartbeat,
         onConnect, onDisconnect, onError, onFault);
   }
 

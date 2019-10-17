@@ -81,6 +81,7 @@ class _StompClient implements StompClient {
   static Future<StompClient> connect(
       StompConnector connector,
       String host,
+      Map<String,String> customHeaders,
       String login,
       String passcode,
       List<int> heartbeat,
@@ -105,6 +106,9 @@ class _StompClient implements StompClient {
     } else {
       client.heartbeat[0] = client.heartbeat[1] = 0;
     }
+    if(customHeaders != null) headers.addAll(customHeaders);
+    print("headers");
+    print(headers);
     writeSimpleFrame(connector, STOMP, headers);
 
     return client._connecting.future;
