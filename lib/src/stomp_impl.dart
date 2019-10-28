@@ -54,7 +54,7 @@ class _StompClient implements StompClient {
   final _DisconnectCallback _onDisconnect;
   final _ErrorCallback _onError;
   final _FaultCallback _onFault;
-
+  DateTime lastMessageDate = new DateTime.now();
   ///<String subscription-id, _Subscriber>
   final Map<String, _Subscriber> _subscribers = new HashMap();
 
@@ -129,9 +129,11 @@ class _StompClient implements StompClient {
 
     _connector
       ..onBytes = (List<int> data) {
+        lastMessageDate = DateTime.now();
         _parser.addBytes(data);
       }
       ..onString = (String data) {
+        lastMessageDate = DateTime.now();
         _parser.addString(data);
       }
       ..onError = (error, stackTrace) {

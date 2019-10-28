@@ -79,6 +79,27 @@ void _handleHeartbeat(_StompClient client, String heartbeat) {
           sy = int.parse(heartbeat.substring(i + 1));
       client.heartbeat[0] = _calcHeartbeat(client.heartbeat[0], sy);
       client.heartbeat[1] = _calcHeartbeat(client.heartbeat[1], sx);
+      final int ttlOutgoing = client.heartbeat[0];
+      if (ttlOutgoing != 0) {
+        Timer.periodic(new Duration(milliseconds: ttlOutgoing), (_) {
+          if (!client.isDisconnected) {
+            //client.sendString("", "");
+            print("pong");
+            pongMessage(client._connector);
+          }
+        });
+      }
+      final int ttlIncoming = client.heartbeat[1];
+      if (ttlIncoming != 0) {
+        Timer.periodic(new Duration(milliseconds: ttlIncoming), (_) {
+          int delta = new DateTime.now()
+              .difference(client.lastMessageDate)
+              .inMilliseconds;
+          if (delta > (ttlIncoming * 2)) {
+           client.disconnect();
+          }
+        });
+      }
     } catch (ex) {
       // ignore silently
     }

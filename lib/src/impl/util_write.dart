@@ -5,7 +5,7 @@ part of stomp_impl_util;
 
 //Commands//
 const String CONNECT = "CONNECT";
-const String STOMP = "STOMP";
+const String STOMP = "CONNECT";
 const String CONNECTED = "CONNECTED";
 const String DISCONNECT = "DISCONNECT";
 const String SEND = "SEND";
@@ -57,7 +57,6 @@ void writeDataFrame(StompConnector connector, String command,
     Map<String, String> headers, String string,
     [List<int> bytes]) {
   writeHeaders(connector, command, headers, endOfHeaders: false);
-
   if (headers == null || headers[CONTENT_LENGTH] == null) {
     int len = 0;
     if (bytes != null) {
@@ -76,6 +75,10 @@ void writeDataFrame(StompConnector connector, String command,
   connector.writeLF();
   connector.write(string, bytes);
   connector.writeEof();
+}
+
+void pongMessage(StompConnector connector) {
+  writeSimpleFrame(connector,SEND,null);
 }
 
 ///Write a frame from the given stream

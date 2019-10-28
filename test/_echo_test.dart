@@ -6,11 +6,15 @@ part of echo_test;
 /** It is part of both echo_vm_test.dart and echo_ws_test.dart
  * so we can test it on both VM and browser.
  */
-Future testEcho({address,headers})
-=> connect(address,customHeaders: headers, onDisconnect: (_) {
-  print("Disconnected");
+Future testEcho({address,headers,heartbeat})
+=> connect(address,customHeaders: headers,heartbeat: heartbeat,
+onConnect: ( client, Map<String, String> headers){
+} , onDisconnect: (_) {
+  print("disconnect");
+},onError: ( client, String message, String detail, Map<String, String> headers){
+
 }).then((client) {
-  test("echo test", () {
+    test("echo test", () {
     final String destination = "/foo";
     final List<String> sends = ["1. apple", "2. orange\nand 2nd line", "3. mango"];
     final List<String> sendExtraHeader = ["123", "abc:", "xyz"];

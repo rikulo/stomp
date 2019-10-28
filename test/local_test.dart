@@ -13,11 +13,11 @@ import 'package:stomp/vm.dart' show connect;
 part "_echo_test.dart";
 
 void main() {
-  final address = "ws://192.168.1.79:8088/ws";
+  final address = "ws://192.168.1.110:8088/ws";
   Map<String,String> customHeaders = new LinkedHashMap();
   customHeaders["userid"]="D7t7G8989y3";
   customHeaders["platform"]="mobile";
-  testEcho(address: address,headers: customHeaders)
+  testEcho(address: address,headers: customHeaders,heartbeat: [10000,10000])
   .catchError((ex) {
       print("Unable to connect $address\n"
         "Check if the server has been started\n\nCause:\n$ex");
