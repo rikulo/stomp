@@ -143,6 +143,7 @@ class _StompClient implements StompClient {
         _disconnected = true;
         _subscribers.clear();
         _receipts.clear();
+        cleanTimers();
         if (_onDisconnect != null) _onDisconnect(this);
       };
   }
@@ -159,7 +160,6 @@ class _StompClient implements StompClient {
   Future disconnect({String receipt}) {
     _checkSend();
     _disconnected = true;
-
     Completer completer;
     Map<String, String> headers;
 
