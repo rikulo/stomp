@@ -4,40 +4,51 @@
 library stomp_impl_plugin_vm;
 
 import "dart:async";
-import "dart:io";
-
-import "plugin.dart" show BytesStompConnector;
+import 'package:web_socket_channel/io.dart';
+import "plugin.dart" show StringStompConnector;
+import 'package:web_socket_channel/status.dart' as status;
 
 /** The implementation on top of [Socket].
  */
-class SocketStompConnector extends BytesStompConnector {
-  final Socket _socket;
+class SocketStompConnector extends StringStompConnector {
+  final IOWebSocketChannel _socket;
+  StreamSubscription _listen;
 
   SocketStompConnector(this._socket) {
     _init();
   }
   void _init() {
-    _socket.listen((List<int> data) {
-      if (data != null && !data.isEmpty)
-        onBytes(data);
-    }, onError: (error, stackTrace) {
-      onError(error, stackTrace);
-    }, onDone: () {
+    _listen = _socket.stream.listen((data)  {
+      if (data != null) {
+        final String sdata = data.toString();
+        if (sdata.isNotEmpty) onString(sdata);
+      }
+    });
+    
+    _listen.onError((err) => onError(err, null));
+    _listen.onDone(() => onClose());
+
+    _socket.stream.handleError((error) => onError(error, null));
+
+    _socket.sink.done.then((v) {
       onClose();
     });
   }
 
   @override
   Future close() {
-    _socket.destroy();
+    _listen.cancel();
+    _socket.sink.close(status.goingAway);
     return new Future.value();
   }
-
-  @override
-  void writeBytes_(List<int> bytes) {
-    _socket.add(bytes);
-  }
+ 
   @override
   Future writeStream_(Stream<List<int>> stream)
-  => _socket.addStream(stream);
+  => _socket.sink.addStream(stream);
+
+  @override
+  void writeString_(String string) {
+    _socket.sink.add(string);
+    // TODO: implement writeString_
+  }
 }
