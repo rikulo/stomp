@@ -79,7 +79,8 @@ void writeDataFrame(StompConnector connector, String command,
 }
 
 void pongMessage(StompConnector connector) {
-  writeSimpleFrame(connector, SEND, null);
+  connector.writeLF();
+  connector.writeEof();
 }
 
 ///Write a frame from the given stream
