@@ -86,7 +86,6 @@ void _handleHeartbeat(_StompClient client, String heartbeat) {
         outgoingTimer =
             Timer.periodic(new Duration(milliseconds: ttlOutgoing), (_) {
           if (!client.isDisconnected) {
-            print("pong");
             pongMessage(client._connector);
           }
         });
