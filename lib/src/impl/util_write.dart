@@ -78,6 +78,11 @@ void writeDataFrame(StompConnector connector, String command,
   connector.writeEof();
 }
 
+void pongMessage(StompConnector connector) {
+  connector.writeLF();
+  connector.writeEof();
+}
+
 ///Write a frame from the given stream
 Future writeStreamFrame(StompConnector connector, String command,
     Map<String, String> headers, Stream<List<int>> stream) {

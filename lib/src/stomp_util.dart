@@ -5,6 +5,8 @@ part of stomp;
 
 const int _SUB_BYTES = 0, _SUB_STRING = 1, _SUB_JSON = 2, _SUB_BLOB = 3;
 
+Timer outgoingTimer, incomingTimer;
+
 ///The information of a subscriber
 class _Subscriber {
   final String id;
@@ -79,10 +81,36 @@ void _handleHeartbeat(_StompClient client, String heartbeat) {
           sy = int.parse(heartbeat.substring(i + 1));
       client.heartbeat[0] = _calcHeartbeat(client.heartbeat[0], sy);
       client.heartbeat[1] = _calcHeartbeat(client.heartbeat[1], sx);
+      final int ttlOutgoing = client.heartbeat[0];
+      if (ttlOutgoing != 0) {
+        outgoingTimer =
+            Timer.periodic(new Duration(milliseconds: ttlOutgoing), (_) {
+          if (!client.isDisconnected) {
+            pongMessage(client._connector);
+          }
+        });
+      }
+      final int ttlIncoming = client.heartbeat[1];
+      if (ttlIncoming != 0) {
+        incomingTimer =
+            Timer.periodic(new Duration(milliseconds: ttlIncoming), (_) {
+          int delta = new DateTime.now()
+              .difference(client.lastMessageDate)
+              .inMilliseconds;
+          if (delta > (ttlIncoming * 2)) {
+            client.disconnect();
+          }
+        });
+      }
     } catch (ex) {
       // ignore silently
     }
   }
+}
+
+cleanTimers() {
+  if (outgoingTimer != null && outgoingTimer.isActive) outgoingTimer.cancel();
+  if (incomingTimer != null && incomingTimer.isActive) incomingTimer.cancel();
 }
 
 int _calcHeartbeat(int a, int b) => a == 0 || b == 0 ? 0 : max(a, b);
