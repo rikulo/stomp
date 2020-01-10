@@ -32,7 +32,7 @@ import "impl/plugin_vm.dart" show SocketStompConnector;
  * * [onFault] -- callback when an exception is received.
  */
 Future<StompClient> connect(address, {int port: 61626,
-    String host, String login, String passcode, List<int> heartbeat,
+    String host, String login, String passcode, List<int> heartbeat, Map<String, String> extraHeaders,
     void onConnect(StompClient client, Map<String, String> headers),
     void onDisconnect(StompClient client),
     void onError(StompClient client, String message, String detail, Map<String, String> headers),
@@ -41,4 +41,4 @@ Future<StompClient> connect(address, {int port: 61626,
   => StompClient.connect(new SocketStompConnector(socket),
     host: host, login: login, passcode: passcode, heartbeat: heartbeat,
     onConnect: onConnect, onDisconnect: onDisconnect,
-    onError: onError, onFault: onFault));
+    onError: onError, onFault: onFault, extraHeaders: extraHeaders));
